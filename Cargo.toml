@@ -1,0 +1,8 @@
+[package]
+name = "feedfinder"
+version = "0.1.0"
+authors = ["Wesley Moore <wes@wezm.net>"]
+
+[dependencies]
+kuchiki = "0.6.0"
+reqwest = "0.8.2"
