@@ -132,9 +132,31 @@ fn test_detect_meta_json_feed() {
 #[test]
 fn test_body_link_feed() {
     let base = Url::parse("http://example.com/").unwrap();
-    let html = r#"<html><body><a href="/feed.rss">RSS</a></body</html>"#.to_owned();
-    let url = Url::parse("http://example.com/feed.rss").unwrap();
+    let html = r#"<html><body><a href="/feed/">RSS</a></body</html>"#.to_owned();
+    let url = Url::parse("http://example.com/feed/").unwrap();
     assert_eq!(detect_feeds(&base, html), Ok(vec![Feed::Link(url)]));
 }
 
+#[test]
+fn test_body_link_xml() {
+    let base = Url::parse("http://example.com/").unwrap();
+    let html = r#"<html><body><a href="/index.xml">RSS</a></body</html>"#.to_owned();
+    let url = Url::parse("http://example.com/index.xml").unwrap();
+    assert_eq!(detect_feeds(&base, html), Ok(vec![Feed::Link(url)]));
+}
 
+#[test]
+fn test_body_link_rss() {
+    let base = Url::parse("http://example.com/").unwrap();
+    let html = r#"<html><body><a href="/comments.rss">RSS</a></body</html>"#.to_owned();
+    let url = Url::parse("http://example.com/comments.rss").unwrap();
+    assert_eq!(detect_feeds(&base, html), Ok(vec![Feed::Link(url)]));
+}
+
+#[test]
+fn test_body_link_atom() {
+    let base = Url::parse("http://example.com/").unwrap();
+    let html = r#"<html><body><a href="http://other.example.com/posts.atom">RSS</a></body</html>"#.to_owned();
+    let url = Url::parse("http://other.example.com/posts.atom").unwrap();
+    assert_eq!(detect_feeds(&base, html), Ok(vec![Feed::Link(url)]));
+}
