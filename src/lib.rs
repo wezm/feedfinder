@@ -1,3 +1,55 @@
+//! # feedfinder
+//!
+//! The `feedfinder` crate is for auto-discovering RSS, Atom, JSON feeds from the content of a
+//! page.
+//!
+//! You supply the primary function [detect_feeds](fn.detect_feeds.html) with the content of
+//! a HTML page and the URL of that page and it returns a list of possible feeds.
+//!
+//! ## Getting Started
+//!
+//! Add dependencies to `Cargo.toml`:
+//!
+//! ```toml
+//! feedfinder = "0.1"
+//! ```
+//!
+//! ## Example
+//!
+//! This example detects the feed linked via the `<link>` tag in the HTML.
+//!
+//! ```rust
+//! extern crate feedfinder;
+//! extern crate url;
+//!
+//! use feedfinder::detect_feeds;
+//! use url::Url;
+//!
+//! fn main() {
+//!     let url = Url::parse("https://example.com/example").expect("unable to parse url");
+//!     let html = r#"
+//!         <html>
+//!             <head>
+//!                 <title>Example</title>
+//!                 <link rel="alternate" href="/posts.rss" type="application/rss+xml" />
+//!             </head>
+//!             <body>
+//!                 My fun page with a feed.
+//!             </body>
+//!         </html>"#.to_owned();
+//!
+//!     match detect_feeds(&url, html) {
+//!         Ok(feeds) => {
+//!             println!("Possible feeds for {}", url);
+//!             for feed in feeds {
+//!                 println!("{:?}", feed);
+//!             }
+//!         }
+//!         Err(err) => println!("Unable to find feeds due to error: {}", err),
+//!     }
+//! }
+//! ```
+
 #[macro_use]
 extern crate failure;
 extern crate kuchiki;
@@ -30,6 +82,7 @@ struct FeedFinder<'a> {
     base_url: &'a Url,
 }
 
+/// Find feeds in the supplied content
 pub fn detect_feeds(base_url: &Url, html: String) -> FeedResult {
     let finder = FeedFinder {
         doc: kuchiki::parse_html().one(html),
@@ -63,11 +116,11 @@ fn nth_path_segment(url: &Url, nth: usize) -> Option<&str> {
 impl<'a> FeedFinder<'a> {
     fn meta_links(&self) -> FeedResult {
         let mut feeds = vec![];
-        for meta in self.doc
-            .select("meta[rel='alternate']")
+        for link in self.doc
+            .select("link[rel='alternate']")
             .map_err(|_| FeedFinderError::Select)?
         {
-            let attrs = meta.attributes.borrow();
+            let attrs = link.attributes.borrow();
             match (attrs.get("type"), attrs.get("href")) {
                 (Some("application/rss+xml"), Some(href)) => feeds.push(Feed::Rss(self.base_url
                     .join(href)
@@ -130,8 +183,8 @@ impl<'a> FeedFinder<'a> {
     fn body_links(&self) -> FeedResult {
         let mut feeds = vec![];
 
-        for meta in self.doc.select("a").map_err(|_| FeedFinderError::Select)? {
-            let attrs = meta.attributes.borrow();
+        for a in self.doc.select("a").map_err(|_| FeedFinderError::Select)? {
+            let attrs = a.attributes.borrow();
             if let Some(href) = attrs.get("href") {
                 if MIGHT_BE_FEED.iter().any(|hint| href.contains(hint)) {
                     feeds.push(Feed::Link(self.base_url
@@ -191,7 +244,7 @@ impl<'a> FeedFinder<'a> {
 #[test]
 fn test_detect_meta_atom() {
     let base = Url::parse("http://example.com/").unwrap();
-    let html = r#"<html><head><meta rel="alternate" type="application/atom+xml" href="http://example.com/feed.atom"></head></html>"#.to_owned();
+    let html = r#"<html><head><link rel="alternate" type="application/atom+xml" href="http://example.com/feed.atom"></head></html>"#.to_owned();
     let url = Url::parse("http://example.com/feed.atom").unwrap();
     assert_eq!(detect_feeds(&base, html), Ok(vec![Feed::Atom(url)]));
 }
@@ -199,7 +252,7 @@ fn test_detect_meta_atom() {
 #[test]
 fn test_detect_meta_rss() {
     let base = Url::parse("http://example.com/").unwrap();
-    let html = r#"<html><head><meta rel="alternate" type="application/rss+xml" href="http://example.com/feed.rss"></head></html>"#.to_owned();
+    let html = r#"<html><head><link rel="alternate" type="application/rss+xml" href="http://example.com/feed.rss"></head></html>"#.to_owned();
     let url = Url::parse("http://example.com/feed.rss").unwrap();
     assert_eq!(detect_feeds(&base, html), Ok(vec![Feed::Rss(url)]));
 }
@@ -207,7 +260,7 @@ fn test_detect_meta_rss() {
 #[test]
 fn test_detect_meta_rss_relative() {
     let base = Url::parse("http://example.com/").unwrap();
-    let html = r#"<html><head><meta rel="alternate" type="application/rss+xml" href="/feed.rss"></head></html>"#.to_owned();
+    let html = r#"<html><head><link rel="alternate" type="application/rss+xml" href="/feed.rss"></head></html>"#.to_owned();
     let url = Url::parse("http://example.com/feed.rss").unwrap();
     assert_eq!(detect_feeds(&base, html), Ok(vec![Feed::Rss(url)]));
 }
@@ -215,7 +268,7 @@ fn test_detect_meta_rss_relative() {
 #[test]
 fn test_detect_meta_json_feed() {
     let base = Url::parse("http://example.com/").unwrap();
-    let html = r#"<html><head><meta rel="alternate" type="application/json" href="http://example.com/feed.json"></head></html>"#.to_owned();
+    let html = r#"<html><head><link rel="alternate" type="application/json" href="http://example.com/feed.json"></head></html>"#.to_owned();
     let url = Url::parse("http://example.com/feed.json").unwrap();
     assert_eq!(detect_feeds(&base, html), Ok(vec![Feed::Json(url)]));
 }
