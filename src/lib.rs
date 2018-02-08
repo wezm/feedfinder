@@ -36,7 +36,12 @@ pub fn detect_feeds(base_url: &Url, html: String) -> FeedResult {
         base_url,
     };
 
-    let sources = [FeedFinder::meta_links, FeedFinder::youtube, FeedFinder::body_links, FeedFinder::guess];
+    let sources = [
+        FeedFinder::meta_links,
+        FeedFinder::youtube,
+        FeedFinder::body_links,
+        FeedFinder::guess,
+    ];
     for source in &sources {
         let candidates = source(&finder)?;
         if !candidates.is_empty() {
@@ -50,8 +55,7 @@ pub fn detect_feeds(base_url: &Url, html: String) -> FeedResult {
 fn nth_path_segment(url: &Url, nth: usize) -> Option<&str> {
     if let Some(mut segments) = url.path_segments() {
         segments.nth(nth)
-    }
-    else {
+    } else {
         None
     }
 }
@@ -59,20 +63,21 @@ fn nth_path_segment(url: &Url, nth: usize) -> Option<&str> {
 impl<'a> FeedFinder<'a> {
     fn meta_links(&self) -> FeedResult {
         let mut feeds = vec![];
-        for meta in self.doc.select("meta[rel='alternate']")
+        for meta in self.doc
+            .select("meta[rel='alternate']")
             .map_err(|_| FeedFinderError::Select)?
         {
             let attrs = meta.attributes.borrow();
             match (attrs.get("type"), attrs.get("href")) {
-                (Some("application/rss+xml"), Some(href)) => {
-                    feeds.push(Feed::Rss(self.base_url.join(href).map_err(FeedFinderError::Url)?))
-                }
-                (Some("application/atom+xml"), Some(href)) => {
-                    feeds.push(Feed::Atom(self.base_url.join(href).map_err(FeedFinderError::Url)?))
-                }
-                (Some("application/json"), Some(href)) => {
-                    feeds.push(Feed::Json(self.base_url.join(href).map_err(FeedFinderError::Url)?))
-                }
+                (Some("application/rss+xml"), Some(href)) => feeds.push(Feed::Rss(self.base_url
+                    .join(href)
+                    .map_err(FeedFinderError::Url)?)),
+                (Some("application/atom+xml"), Some(href)) => feeds.push(Feed::Atom(self.base_url
+                    .join(href)
+                    .map_err(FeedFinderError::Url)?)),
+                (Some("application/json"), Some(href)) => feeds.push(Feed::Json(self.base_url
+                    .join(href)
+                    .map_err(FeedFinderError::Url)?)),
                 _ => (),
             }
         }
@@ -86,23 +91,32 @@ impl<'a> FeedFinder<'a> {
 
         if url.starts_with("https://www.youtube.com/channel/") {
             // Get the path segment after /channel/
-            if let Some(id) = nth_path_segment(&self.base_url, 1) {
-                let feed = Url::parse(&format!("https://www.youtube.com/feeds/videos.xml?channel_id={}", id)).map_err(FeedFinderError::Url)?;
+            if let Some(id) = nth_path_segment(self.base_url, 1) {
+                let feed = Url::parse(&format!(
+                    "https://www.youtube.com/feeds/videos.xml?channel_id={}",
+                    id
+                )).map_err(FeedFinderError::Url)?;
                 feeds.push(Feed::Atom(feed));
             }
-        }
-        else if url.starts_with("https://www.youtube.com/user/") {
+        } else if url.starts_with("https://www.youtube.com/user/") {
             // Get the path segment after /user/
-            if let Some(id) = nth_path_segment(&self.base_url, 1) {
-                let feed = Url::parse(&format!("https://www.youtube.com/feeds/videos.xml?user={}", id)).map_err(FeedFinderError::Url)?;
+            if let Some(id) = nth_path_segment(self.base_url, 1) {
+                let feed = Url::parse(&format!(
+                    "https://www.youtube.com/feeds/videos.xml?user={}",
+                    id
+                )).map_err(FeedFinderError::Url)?;
                 feeds.push(Feed::Atom(feed));
             }
-        }
-        else if url.starts_with("https://www.youtube.com/playlist?list=") || url.starts_with("https://www.youtube.com/watch") {
+        } else if url.starts_with("https://www.youtube.com/playlist?list=")
+            || url.starts_with("https://www.youtube.com/watch")
+        {
             // get the value of the list query param
             for (key, value) in self.base_url.query_pairs() {
                 if key == "list" {
-                    let feed = Url::parse(&format!("https://www.youtube.com/feeds/videos.xml?playlist_id={}", value)).map_err(FeedFinderError::Url)?;
+                    let feed = Url::parse(&format!(
+                        "https://www.youtube.com/feeds/videos.xml?playlist_id={}",
+                        value
+                    )).map_err(FeedFinderError::Url)?;
                     feeds.push(Feed::Atom(feed));
                     break;
                 }
@@ -116,13 +130,13 @@ impl<'a> FeedFinder<'a> {
     fn body_links(&self) -> FeedResult {
         let mut feeds = vec![];
 
-        for meta in self.doc.select("a")
-            .map_err(|_| FeedFinderError::Select)?
-        {
+        for meta in self.doc.select("a").map_err(|_| FeedFinderError::Select)? {
             let attrs = meta.attributes.borrow();
-            if let Some(ref href) = attrs.get("href") {
+            if let Some(href) = attrs.get("href") {
                 if MIGHT_BE_FEED.iter().any(|hint| href.contains(hint)) {
-                    feeds.push(Feed::Link(self.base_url.join(href).map_err(FeedFinderError::Url)?))
+                    feeds.push(Feed::Link(self.base_url
+                        .join(href)
+                        .map_err(FeedFinderError::Url)?))
                 }
             }
         }
@@ -140,21 +154,35 @@ impl<'a> FeedFinder<'a> {
         let markup = self.doc.to_string().to_lowercase();
 
         if markup.contains("tumblr.com") {
-            Ok(vec![Feed::Guess(self.base_url.join("./rss").map_err(FeedFinderError::Url)?)])
-        }
-        else if markup.contains("wordpress") {
-            Ok(vec![Feed::Guess(self.base_url.join("./feed").map_err(FeedFinderError::Url)?)])
-        }
-        else if markup.contains("hugo") {
-            Ok(vec![Feed::Guess(self.base_url.join("./index.xml").map_err(FeedFinderError::Url)?)])
-        }
-        else if markup.contains("jekyll") || self.base_url.host_str().map(|host| host.ends_with("github.io")).unwrap_or(false) {
-            Ok(vec![Feed::Guess(self.base_url.join("./atom.xml").map_err(FeedFinderError::Url)?)])
-        }
-        else if markup.contains("ghost") {
-            Ok(vec![Feed::Guess(self.base_url.join("./rss/").map_err(FeedFinderError::Url)?)])
-        }
-        else {
+            Ok(vec![
+                Feed::Guess(self.base_url.join("./rss").map_err(FeedFinderError::Url)?),
+            ])
+        } else if markup.contains("wordpress") {
+            Ok(vec![
+                Feed::Guess(self.base_url.join("./feed").map_err(FeedFinderError::Url)?),
+            ])
+        } else if markup.contains("hugo") {
+            Ok(vec![
+                Feed::Guess(self.base_url
+                    .join("./index.xml")
+                    .map_err(FeedFinderError::Url)?),
+            ])
+        } else if markup.contains("jekyll")
+            || self.base_url
+                .host_str()
+                .map(|host| host.ends_with("github.io"))
+                .unwrap_or(false)
+        {
+            Ok(vec![
+                Feed::Guess(self.base_url
+                    .join("./atom.xml")
+                    .map_err(FeedFinderError::Url)?),
+            ])
+        } else if markup.contains("ghost") {
+            Ok(vec![
+                Feed::Guess(self.base_url.join("./rss/").map_err(FeedFinderError::Url)?),
+            ])
+        } else {
             Ok(vec![])
         }
     }
@@ -251,7 +279,8 @@ fn test_guess_hugo() {
 #[test]
 fn test_guess_jekyll() {
     let base = Url::parse("http://example.com/").unwrap();
-    let html = r#"<html><head></head><body><!-- Begin Jekyll SEO tag v2.3.0 -->First post!</body</html>"#.to_owned();
+    let html =
+        r#"<html><head></head><body><!-- Begin Jekyll SEO tag v2.3.0 -->First post!</body</html>"#.to_owned();
     let url = Url::parse("http://example.com/atom.xml").unwrap();
     assert_eq!(detect_feeds(&base, html), Ok(vec![Feed::Guess(url)]));
 }
@@ -284,7 +313,9 @@ fn test_guess_non_root() {
 fn test_youtube_channel() {
     let base = Url::parse("https://www.youtube.com/channel/UCaYhcUwRBNscFNUKTjgPFiA").unwrap();
     let html = r#"<html><head></head><body>YouTube</body</html>"#.to_owned();
-    let url = Url::parse("https://www.youtube.com/feeds/videos.xml?channel_id=UCaYhcUwRBNscFNUKTjgPFiA").unwrap();
+    let url = Url::parse(
+        "https://www.youtube.com/feeds/videos.xml?channel_id=UCaYhcUwRBNscFNUKTjgPFiA",
+    ).unwrap();
     assert_eq!(detect_feeds(&base, html), Ok(vec![Feed::Atom(url)]));
 }
 
@@ -298,16 +329,24 @@ fn test_youtube_user() {
 
 #[test]
 fn test_youtube_playlist() {
-    let base = Url::parse("https://www.youtube.com/playlist?list=PLTOeCUgrkpMNEHx6j0vCH0cuyAIVZadnc").unwrap();
+    let base = Url::parse(
+        "https://www.youtube.com/playlist?list=PLTOeCUgrkpMNEHx6j0vCH0cuyAIVZadnc",
+    ).unwrap();
     let html = r#"<html><head></head><body>YouTube</body</html>"#.to_owned();
-    let url = Url::parse("https://www.youtube.com/feeds/videos.xml?playlist_id=PLTOeCUgrkpMNEHx6j0vCH0cuyAIVZadnc").unwrap();
+    let url = Url::parse(
+        "https://www.youtube.com/feeds/videos.xml?playlist_id=PLTOeCUgrkpMNEHx6j0vCH0cuyAIVZadnc",
+    ).unwrap();
     assert_eq!(detect_feeds(&base, html), Ok(vec![Feed::Atom(url)]));
 }
 
 #[test]
 fn test_youtube_watch_playlist() {
-    let base = Url::parse("https://www.youtube.com/watch?v=0gjFYpvHyrY&list=FLOEg2K4TcePNx9SdGdR0zpg").unwrap();
+    let base = Url::parse(
+        "https://www.youtube.com/watch?v=0gjFYpvHyrY&list=FLOEg2K4TcePNx9SdGdR0zpg",
+    ).unwrap();
     let html = r#"<html><head></head><body>YouTube</body</html>"#.to_owned();
-    let url = Url::parse("https://www.youtube.com/feeds/videos.xml?playlist_id=FLOEg2K4TcePNx9SdGdR0zpg").unwrap();
+    let url = Url::parse(
+        "https://www.youtube.com/feeds/videos.xml?playlist_id=FLOEg2K4TcePNx9SdGdR0zpg",
+    ).unwrap();
     assert_eq!(detect_feeds(&base, html), Ok(vec![Feed::Atom(url)]));
 }
