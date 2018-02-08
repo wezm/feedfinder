@@ -47,6 +47,15 @@ pub fn detect_feeds(base_url: &Url, html: String) -> FeedResult {
     Ok(Vec::new())
 }
 
+fn nth_path_segment(url: &Url, nth: usize) -> Option<&str> {
+    if let Some(mut segments) = url.path_segments() {
+        segments.nth(nth)
+    }
+    else {
+        None
+    }
+}
+
 impl<'a> FeedFinder<'a> {
     fn meta_links(&self) -> FeedResult {
         let mut feeds = vec![];
@@ -72,7 +81,35 @@ impl<'a> FeedFinder<'a> {
     }
 
     fn youtube(&self) -> FeedResult {
-        Ok(vec![])
+        let mut feeds = vec![];
+        let url = self.base_url.as_str();
+
+        if url.starts_with("https://www.youtube.com/channel/") {
+            // Get the path segment after /channel/
+            if let Some(id) = nth_path_segment(&self.base_url, 1) {
+                let feed = Url::parse(&format!("https://www.youtube.com/feeds/videos.xml?channel_id={}", id)).map_err(FeedFinderError::Url)?;
+                feeds.push(Feed::Atom(feed));
+            }
+        }
+        else if url.starts_with("https://www.youtube.com/user/") {
+            // Get the path segment after /user/
+            if let Some(id) = nth_path_segment(&self.base_url, 1) {
+                let feed = Url::parse(&format!("https://www.youtube.com/feeds/videos.xml?user={}", id)).map_err(FeedFinderError::Url)?;
+                feeds.push(Feed::Atom(feed));
+            }
+        }
+        else if url.starts_with("https://www.youtube.com/playlist?list=") || url.starts_with("https://www.youtube.com/watch") {
+            // get the value of the list query param
+            for (key, value) in self.base_url.query_pairs() {
+                if key == "list" {
+                    let feed = Url::parse(&format!("https://www.youtube.com/feeds/videos.xml?playlist_id={}", value)).map_err(FeedFinderError::Url)?;
+                    feeds.push(Feed::Atom(feed));
+                    break;
+                }
+            }
+        }
+
+        Ok(feeds)
     }
 
     // Searches the body for links to things that might be feeds
@@ -241,4 +278,36 @@ fn test_guess_non_root() {
     let html = r#"<html><head><meta name="generator" content="Hugo 0.27.1" /></head><body>First post!</body</html>"#.to_owned();
     let url = Url::parse("http://example.com/blog/index.xml").unwrap();
     assert_eq!(detect_feeds(&base, html), Ok(vec![Feed::Guess(url)]));
+}
+
+#[test]
+fn test_youtube_channel() {
+    let base = Url::parse("https://www.youtube.com/channel/UCaYhcUwRBNscFNUKTjgPFiA").unwrap();
+    let html = r#"<html><head></head><body>YouTube</body</html>"#.to_owned();
+    let url = Url::parse("https://www.youtube.com/feeds/videos.xml?channel_id=UCaYhcUwRBNscFNUKTjgPFiA").unwrap();
+    assert_eq!(detect_feeds(&base, html), Ok(vec![Feed::Atom(url)]));
+}
+
+#[test]
+fn test_youtube_user() {
+    let base = Url::parse("https://www.youtube.com/user/wezmnet").unwrap();
+    let html = r#"<html><head></head><body>YouTube</body</html>"#.to_owned();
+    let url = Url::parse("https://www.youtube.com/feeds/videos.xml?user=wezmnet").unwrap();
+    assert_eq!(detect_feeds(&base, html), Ok(vec![Feed::Atom(url)]));
+}
+
+#[test]
+fn test_youtube_playlist() {
+    let base = Url::parse("https://www.youtube.com/playlist?list=PLTOeCUgrkpMNEHx6j0vCH0cuyAIVZadnc").unwrap();
+    let html = r#"<html><head></head><body>YouTube</body</html>"#.to_owned();
+    let url = Url::parse("https://www.youtube.com/feeds/videos.xml?playlist_id=PLTOeCUgrkpMNEHx6j0vCH0cuyAIVZadnc").unwrap();
+    assert_eq!(detect_feeds(&base, html), Ok(vec![Feed::Atom(url)]));
+}
+
+#[test]
+fn test_youtube_watch_playlist() {
+    let base = Url::parse("https://www.youtube.com/watch?v=0gjFYpvHyrY&list=FLOEg2K4TcePNx9SdGdR0zpg").unwrap();
+    let html = r#"<html><head></head><body>YouTube</body</html>"#.to_owned();
+    let url = Url::parse("https://www.youtube.com/feeds/videos.xml?playlist_id=FLOEg2K4TcePNx9SdGdR0zpg").unwrap();
+    assert_eq!(detect_feeds(&base, html), Ok(vec![Feed::Atom(url)]));
 }
