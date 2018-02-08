@@ -20,6 +20,7 @@ pub enum Feed {
     Atom(Url),
     Json(Url),
     Link(Url),
+    Guess(Url),
 }
 
 type FeedResult = Result<Vec<Feed>, FeedFinderError>;
@@ -92,8 +93,33 @@ impl<'a> FeedFinder<'a> {
         Ok(feeds)
     }
 
+    // Guesses the feed for some well known locations
+    // Tumblr
+    // Wordpress
+    // Ghost
+    // Jekyll
+    // Hugo
     fn guess(&self) -> FeedResult {
-        Ok(vec![])
+        let markup = self.doc.to_string().to_lowercase();
+
+        if markup.contains("tumblr.com") {
+            Ok(vec![Feed::Guess(self.base_url.join("./rss").map_err(FeedFinderError::Url)?)])
+        }
+        else if markup.contains("wordpress") {
+            Ok(vec![Feed::Guess(self.base_url.join("./feed").map_err(FeedFinderError::Url)?)])
+        }
+        else if markup.contains("hugo") {
+            Ok(vec![Feed::Guess(self.base_url.join("./index.xml").map_err(FeedFinderError::Url)?)])
+        }
+        else if markup.contains("jekyll") || self.base_url.host_str().map(|host| host.ends_with("github.io")).unwrap_or(false) {
+            Ok(vec![Feed::Guess(self.base_url.join("./atom.xml").map_err(FeedFinderError::Url)?)])
+        }
+        else if markup.contains("ghost") {
+            Ok(vec![Feed::Guess(self.base_url.join("./rss/").map_err(FeedFinderError::Url)?)])
+        }
+        else {
+            Ok(vec![])
+        }
     }
 }
 
@@ -159,4 +185,60 @@ fn test_body_link_atom() {
     let html = r#"<html><body><a href="http://other.example.com/posts.atom">RSS</a></body</html>"#.to_owned();
     let url = Url::parse("http://other.example.com/posts.atom").unwrap();
     assert_eq!(detect_feeds(&base, html), Ok(vec![Feed::Link(url)]));
+}
+
+#[test]
+fn test_guess_tumblr() {
+    let base = Url::parse("http://example.com/").unwrap();
+    let html = r#"<html><head><link href="http://static.tumblr.com/example/jquery.fancybox-1.3.4.css" rel="stylesheet" type="text/css"></head><body>First post!</body</html>"#.to_owned();
+    let url = Url::parse("http://example.com/rss").unwrap();
+    assert_eq!(detect_feeds(&base, html), Ok(vec![Feed::Guess(url)]));
+}
+
+#[test]
+fn test_guess_wordpress() {
+    let base = Url::parse("http://example.com/").unwrap();
+    let html = r#"<html><head><meta name="generator" content="WordPress.com" /></head><body>First post!</body</html>"#.to_owned();
+    let url = Url::parse("http://example.com/feed").unwrap();
+    assert_eq!(detect_feeds(&base, html), Ok(vec![Feed::Guess(url)]));
+}
+
+#[test]
+fn test_guess_hugo() {
+    let base = Url::parse("http://example.com/").unwrap();
+    let html = r#"<html><head><meta name="generator" content="Hugo 0.27.1" /></head><body>First post!</body</html>"#.to_owned();
+    let url = Url::parse("http://example.com/index.xml").unwrap();
+    assert_eq!(detect_feeds(&base, html), Ok(vec![Feed::Guess(url)]));
+}
+
+#[test]
+fn test_guess_jekyll() {
+    let base = Url::parse("http://example.com/").unwrap();
+    let html = r#"<html><head></head><body><!-- Begin Jekyll SEO tag v2.3.0 -->First post!</body</html>"#.to_owned();
+    let url = Url::parse("http://example.com/atom.xml").unwrap();
+    assert_eq!(detect_feeds(&base, html), Ok(vec![Feed::Guess(url)]));
+}
+
+#[test]
+fn test_guess_github_io() {
+    let base = Url::parse("http://example.github.io/").unwrap();
+    let html = r#"<html><head></head><body>First post!</body</html>"#.to_owned();
+    let url = Url::parse("http://example.github.io/atom.xml").unwrap();
+    assert_eq!(detect_feeds(&base, html), Ok(vec![Feed::Guess(url)]));
+}
+
+#[test]
+fn test_guess_ghost() {
+    let base = Url::parse("http://example.com/").unwrap();
+    let html = r#"<html><head><meta name="generator" content="Ghost 1.21" /></head><body>First post!</body</html>"#.to_owned();
+    let url = Url::parse("http://example.com/rss/").unwrap();
+    assert_eq!(detect_feeds(&base, html), Ok(vec![Feed::Guess(url)]));
+}
+
+#[test]
+fn test_guess_non_root() {
+    let base = Url::parse("http://example.com/blog/").unwrap();
+    let html = r#"<html><head><meta name="generator" content="Hugo 0.27.1" /></head><body>First post!</body</html>"#.to_owned();
+    let url = Url::parse("http://example.com/blog/index.xml").unwrap();
+    assert_eq!(detect_feeds(&base, html), Ok(vec![Feed::Guess(url)]));
 }
