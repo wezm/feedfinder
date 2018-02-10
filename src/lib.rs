@@ -6,6 +6,23 @@
 //! You supply the primary function [detect_feeds](fn.detect_feeds.html) with the content of
 //! a HTML page and the URL of that page and it returns a list of possible feeds.
 //!
+//! ## About
+//!
+//! `feedfiner` can find feeds from these sources:
+//!
+//! * Linked via the `<link>` tag in the HTML
+//! * Linked via `<a>` tag in the HTML
+//! * By guessing from the software used to generate the page:
+//!     * Tumblr
+//!     * WordPress
+//!     * Hugo
+//!     * Jekyll
+//!     * Ghost
+//! * From YouTube:
+//!     * channels
+//!     * playlists
+//!     * users
+//!
 //! ## Getting Started
 //!
 //! Add dependencies to `Cargo.toml`:
@@ -82,7 +99,74 @@ struct FeedFinder<'a> {
     base_url: &'a Url,
 }
 
-/// Find feeds in the supplied content
+/// Find feeds in the supplied content.
+///
+/// The `detect_feeds` function will look for feeds:
+///
+/// * Linked via the `<link>` tag in the HTML
+/// * Linked via `<a>` tag in the HTML
+/// * By guessing from the software used to generate the page:
+///     * Tumblr
+///     * WordPress
+///     * Hugo
+///     * Jekyll
+///     * Ghost
+/// * From YouTube:
+///     * channels
+///     * playlists
+///     * users
+///
+/// ### Parameters
+///
+/// `detect_feeds` takes a String of HTML content and the URL that content was retrieved
+/// from. The function will not fetch the URL itself. This needs to be done by the caller
+/// using a library like [reqwest](https://crates.io/crates/reqwest) or
+/// [hyper](https://crates.io/crates/hyper).
+///
+/// ### Return value
+///
+/// `detect_feeds` does not access the network so the returned list of feed candidates
+/// should be tested to see:
+///
+/// * If they actually exist.
+/// * If they look like they are a feed (by checking for an XML or JSON MIME type).
+///
+/// The return value is wrapped in a Result, errors can occur if a candidate URL is
+/// invalid or there is a problem parsing or traversing the HTML content.
+///
+/// ### Example
+///
+/// ```rust
+/// extern crate feedfinder;
+/// extern crate url;
+///
+/// use feedfinder::detect_feeds;
+/// use url::Url;
+///
+/// fn main() {
+///     let url = Url::parse("https://example.com/example").expect("unable to parse url");
+///     let html = r#"
+///         <html>
+///             <head>
+///                 <title>Example</title>
+///                 <link rel="alternate" href="/posts.rss" type="application/rss+xml" />
+///             </head>
+///             <body>
+///                 My fun page with a feed.
+///             </body>
+///         </html>"#.to_owned();
+///
+///     match detect_feeds(&url, html) {
+///         Ok(feeds) => {
+///             println!("Possible feeds for {}", url);
+///             for feed in feeds {
+///                 println!("{:?}", feed);
+///             }
+///         }
+///         Err(err) => println!("Unable to find feeds due to error: {}", err),
+///     }
+/// }
+/// ```
 pub fn detect_feeds(base_url: &Url, html: String) -> FeedResult {
     let finder = FeedFinder {
         doc: kuchiki::parse_html().one(html),
