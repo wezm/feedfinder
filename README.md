@@ -2,6 +2,9 @@
 
 A Rust crate for auto-discovering RSS, Atom, JSON feeds.
 
+[![Vexor status](https://ci.vexor.io/projects/4c415627-b942-4265-acbb-3a5274e51f84/status.svg)](https://ci.vexor.io/ui/projects/4c415627-b942-4265-acbb-3a5274e51f84/builds)
+[![Docs on docs.rs](https://docs.rs/feedfinder/badge.svg)][Documentation]
+
 [Documentation]
 
 `feedfiner` can find feeds:
