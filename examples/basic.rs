@@ -15,7 +15,7 @@ fn main() {
             <body>
                 My fun page with a feed.
             </body>
-        </html>"#.to_owned();
+        </html>"#;
 
     match detect_feeds(&url, html) {
         Ok(feeds) => {

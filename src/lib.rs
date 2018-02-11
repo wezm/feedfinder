@@ -53,7 +53,7 @@
 //!             <body>
 //!                 My fun page with a feed.
 //!             </body>
-//!         </html>"#.to_owned();
+//!         </html>"#;
 //!
 //!     match detect_feeds(&url, html) {
 //!         Ok(feeds) => {
@@ -160,7 +160,7 @@ struct FeedFinder<'a> {
 ///             <body>
 ///                 My fun page with a feed.
 ///             </body>
-///         </html>"#.to_owned();
+///         </html>"#;
 ///
 ///     match detect_feeds(&url, html) {
 ///         Ok(feeds) => {
@@ -173,7 +173,7 @@ struct FeedFinder<'a> {
 ///     }
 /// }
 /// ```
-pub fn detect_feeds(base_url: &Url, html: String) -> FeedResult {
+pub fn detect_feeds(base_url: &Url, html: &str) -> FeedResult {
     let finder = FeedFinder {
         doc: kuchiki::parse_html().one(html),
         base_url,
@@ -358,7 +358,7 @@ impl Feed {
 #[test]
 fn test_detect_meta_atom() {
     let base = Url::parse("http://example.com/").unwrap();
-    let html = r#"<html><head><link rel="alternate" type="application/atom+xml" href="http://example.com/feed.atom"></head></html>"#.to_owned();
+    let html = r#"<html><head><link rel="alternate" type="application/atom+xml" href="http://example.com/feed.atom"></head></html>"#;
     let url = Url::parse("http://example.com/feed.atom").unwrap();
     assert_eq!(
         detect_feeds(&base, html),
@@ -374,7 +374,7 @@ fn test_detect_meta_atom() {
 #[test]
 fn test_detect_meta_rss() {
     let base = Url::parse("http://example.com/").unwrap();
-    let html = r#"<html><head><link rel="alternate" type="application/rss+xml" href="http://example.com/feed.rss"></head></html>"#.to_owned();
+    let html = r#"<html><head><link rel="alternate" type="application/rss+xml" href="http://example.com/feed.rss"></head></html>"#;
     let url = Url::parse("http://example.com/feed.rss").unwrap();
     assert_eq!(
         detect_feeds(&base, html),
@@ -390,7 +390,7 @@ fn test_detect_meta_rss() {
 #[test]
 fn test_detect_meta_rss_relative() {
     let base = Url::parse("http://example.com/").unwrap();
-    let html = r#"<html><head><link rel="alternate" type="application/rss+xml" href="/feed.rss"></head></html>"#.to_owned();
+    let html = r#"<html><head><link rel="alternate" type="application/rss+xml" href="/feed.rss"></head></html>"#;
     let url = Url::parse("http://example.com/feed.rss").unwrap();
     assert_eq!(
         detect_feeds(&base, html),
@@ -406,7 +406,7 @@ fn test_detect_meta_rss_relative() {
 #[test]
 fn test_detect_meta_json_feed() {
     let base = Url::parse("http://example.com/").unwrap();
-    let html = r#"<html><head><link rel="alternate" type="application/json" href="http://example.com/feed.json"></head></html>"#.to_owned();
+    let html = r#"<html><head><link rel="alternate" type="application/json" href="http://example.com/feed.json"></head></html>"#;
     let url = Url::parse("http://example.com/feed.json").unwrap();
     assert_eq!(
         detect_feeds(&base, html),
@@ -422,7 +422,7 @@ fn test_detect_meta_json_feed() {
 #[test]
 fn test_body_link_feed() {
     let base = Url::parse("http://example.com/").unwrap();
-    let html = r#"<html><body><a href="/feed/">RSS</a></body</html>"#.to_owned();
+    let html = r#"<html><body><a href="/feed/">RSS</a></body</html>"#;
     let url = Url::parse("http://example.com/feed/").unwrap();
     assert_eq!(
         detect_feeds(&base, html),
@@ -438,7 +438,7 @@ fn test_body_link_feed() {
 #[test]
 fn test_body_link_xml() {
     let base = Url::parse("http://example.com/").unwrap();
-    let html = r#"<html><body><a href="/index.xml">RSS</a></body</html>"#.to_owned();
+    let html = r#"<html><body><a href="/index.xml">RSS</a></body</html>"#;
     let url = Url::parse("http://example.com/index.xml").unwrap();
     assert_eq!(
         detect_feeds(&base, html),
@@ -454,7 +454,7 @@ fn test_body_link_xml() {
 #[test]
 fn test_body_link_rss() {
     let base = Url::parse("http://example.com/").unwrap();
-    let html = r#"<html><body><a href="/comments.rss">RSS</a></body</html>"#.to_owned();
+    let html = r#"<html><body><a href="/comments.rss">RSS</a></body</html>"#;
     let url = Url::parse("http://example.com/comments.rss").unwrap();
     assert_eq!(
         detect_feeds(&base, html),
@@ -470,7 +470,7 @@ fn test_body_link_rss() {
 #[test]
 fn test_body_link_atom() {
     let base = Url::parse("http://example.com/").unwrap();
-    let html = r#"<html><body><a href="http://other.example.com/posts.atom">RSS</a></body</html>"#.to_owned();
+    let html = r#"<html><body><a href="http://other.example.com/posts.atom">RSS</a></body</html>"#;
     let url = Url::parse("http://other.example.com/posts.atom").unwrap();
     assert_eq!(
         detect_feeds(&base, html),
@@ -486,7 +486,7 @@ fn test_body_link_atom() {
 #[test]
 fn test_guess_tumblr() {
     let base = Url::parse("http://example.com/").unwrap();
-    let html = r#"<html><head><link href="http://static.tumblr.com/example/jquery.fancybox-1.3.4.css" rel="stylesheet" type="text/css"></head><body>First post!</body</html>"#.to_owned();
+    let html = r#"<html><head><link href="http://static.tumblr.com/example/jquery.fancybox-1.3.4.css" rel="stylesheet" type="text/css"></head><body>First post!</body</html>"#;
     let url = Url::parse("http://example.com/rss").unwrap();
     assert_eq!(
         detect_feeds(&base, html),
@@ -502,7 +502,7 @@ fn test_guess_tumblr() {
 #[test]
 fn test_guess_wordpress() {
     let base = Url::parse("http://example.com/").unwrap();
-    let html = r#"<html><head><meta name="generator" content="WordPress.com" /></head><body>First post!</body</html>"#.to_owned();
+    let html = r#"<html><head><meta name="generator" content="WordPress.com" /></head><body>First post!</body</html>"#;
     let url = Url::parse("http://example.com/feed").unwrap();
     assert_eq!(
         detect_feeds(&base, html),
@@ -518,7 +518,7 @@ fn test_guess_wordpress() {
 #[test]
 fn test_guess_hugo() {
     let base = Url::parse("http://example.com/").unwrap();
-    let html = r#"<html><head><meta name="generator" content="Hugo 0.27.1" /></head><body>First post!</body</html>"#.to_owned();
+    let html = r#"<html><head><meta name="generator" content="Hugo 0.27.1" /></head><body>First post!</body</html>"#;
     let url = Url::parse("http://example.com/index.xml").unwrap();
     assert_eq!(
         detect_feeds(&base, html),
@@ -535,7 +535,7 @@ fn test_guess_hugo() {
 fn test_guess_jekyll() {
     let base = Url::parse("http://example.com/").unwrap();
     let html =
-        r#"<html><head></head><body><!-- Begin Jekyll SEO tag v2.3.0 -->First post!</body</html>"#.to_owned();
+        r#"<html><head></head><body><!-- Begin Jekyll SEO tag v2.3.0 -->First post!</body</html>"#;
     let url = Url::parse("http://example.com/atom.xml").unwrap();
     assert_eq!(
         detect_feeds(&base, html),
@@ -551,7 +551,7 @@ fn test_guess_jekyll() {
 #[test]
 fn test_guess_github_io() {
     let base = Url::parse("http://example.github.io/").unwrap();
-    let html = r#"<html><head></head><body>First post!</body</html>"#.to_owned();
+    let html = r#"<html><head></head><body>First post!</body</html>"#;
     let url = Url::parse("http://example.github.io/atom.xml").unwrap();
     assert_eq!(
         detect_feeds(&base, html),
@@ -567,7 +567,7 @@ fn test_guess_github_io() {
 #[test]
 fn test_guess_ghost() {
     let base = Url::parse("http://example.com/").unwrap();
-    let html = r#"<html><head><meta name="generator" content="Ghost 1.21" /></head><body>First post!</body</html>"#.to_owned();
+    let html = r#"<html><head><meta name="generator" content="Ghost 1.21" /></head><body>First post!</body</html>"#;
     let url = Url::parse("http://example.com/rss/").unwrap();
     assert_eq!(
         detect_feeds(&base, html),
@@ -583,7 +583,7 @@ fn test_guess_ghost() {
 #[test]
 fn test_guess_non_root() {
     let base = Url::parse("http://example.com/blog/").unwrap();
-    let html = r#"<html><head><meta name="generator" content="Hugo 0.27.1" /></head><body>First post!</body</html>"#.to_owned();
+    let html = r#"<html><head><meta name="generator" content="Hugo 0.27.1" /></head><body>First post!</body</html>"#;
     let url = Url::parse("http://example.com/blog/index.xml").unwrap();
     assert_eq!(
         detect_feeds(&base, html),
@@ -599,7 +599,7 @@ fn test_guess_non_root() {
 #[test]
 fn test_youtube_channel() {
     let base = Url::parse("https://www.youtube.com/channel/UCaYhcUwRBNscFNUKTjgPFiA").unwrap();
-    let html = r#"<html><head></head><body>YouTube</body</html>"#.to_owned();
+    let html = r#"<html><head></head><body>YouTube</body</html>"#;
     let url = Url::parse(
         "https://www.youtube.com/feeds/videos.xml?channel_id=UCaYhcUwRBNscFNUKTjgPFiA",
     ).unwrap();
@@ -617,7 +617,7 @@ fn test_youtube_channel() {
 #[test]
 fn test_youtube_user() {
     let base = Url::parse("https://www.youtube.com/user/wezmnet").unwrap();
-    let html = r#"<html><head></head><body>YouTube</body</html>"#.to_owned();
+    let html = r#"<html><head></head><body>YouTube</body</html>"#;
     let url = Url::parse("https://www.youtube.com/feeds/videos.xml?user=wezmnet").unwrap();
     assert_eq!(
         detect_feeds(&base, html),
@@ -635,7 +635,7 @@ fn test_youtube_playlist() {
     let base = Url::parse(
         "https://www.youtube.com/playlist?list=PLTOeCUgrkpMNEHx6j0vCH0cuyAIVZadnc",
     ).unwrap();
-    let html = r#"<html><head></head><body>YouTube</body</html>"#.to_owned();
+    let html = r#"<html><head></head><body>YouTube</body</html>"#;
     let url = Url::parse(
         "https://www.youtube.com/feeds/videos.xml?playlist_id=PLTOeCUgrkpMNEHx6j0vCH0cuyAIVZadnc",
     ).unwrap();
@@ -655,7 +655,7 @@ fn test_youtube_watch_playlist() {
     let base = Url::parse(
         "https://www.youtube.com/watch?v=0gjFYpvHyrY&list=FLOEg2K4TcePNx9SdGdR0zpg",
     ).unwrap();
-    let html = r#"<html><head></head><body>YouTube</body</html>"#.to_owned();
+    let html = r#"<html><head></head><body>YouTube</body</html>"#;
     let url = Url::parse(
         "https://www.youtube.com/feeds/videos.xml?playlist_id=FLOEg2K4TcePNx9SdGdR0zpg",
     ).unwrap();
