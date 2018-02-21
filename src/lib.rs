@@ -300,6 +300,41 @@ impl<'a> FeedFinder<'a> {
         Ok(feeds)
     }
 
+    // Well this sure isn't pretty. TODO: Clean up
+    fn guess_segments(&self, feed_file: &str) -> FeedResult {
+        let mut feeds = Vec::new();
+
+        if let Some(segments) = self.base_url.path_segments() {
+            let mut remaining_segments = segments.collect::<Vec<_>>();
+            let mut segments = vec!["", feed_file];
+
+            loop {
+                let url = self.base_url
+                    .join(&segments.join("/"))
+                    .map_err(FeedFinderError::Url)?;
+                feeds.push(Feed {
+                    url,
+                    type_: FeedType::Guess,
+                });
+
+                if remaining_segments.is_empty() {
+                    break;
+                }
+
+                let index = segments.len() - 1;
+                let segment = remaining_segments.remove(0);
+                if segment.is_empty() {
+                    // Skip empty strings, which should only occur as the last element
+                    break;
+                }
+
+                segments.insert(index, segment);
+            }
+        }
+
+        Ok(feeds)
+    }
+
     // Guesses the feed for some well known locations
     // Tumblr
     // Wordpress
@@ -310,24 +345,20 @@ impl<'a> FeedFinder<'a> {
         let markup = self.doc.to_string().to_lowercase();
 
         let url = if markup.contains("tumblr.com") {
-            Some(self.base_url.join("./rss").map_err(FeedFinderError::Url)?)
+            Some(self.base_url.join("/rss").map_err(FeedFinderError::Url)?)
         } else if markup.contains("wordpress") {
-            Some(self.base_url.join("./feed").map_err(FeedFinderError::Url)?)
+            Some(self.base_url.join("/feed").map_err(FeedFinderError::Url)?)
         } else if markup.contains("hugo") {
-            Some(self.base_url
-                .join("./index.xml")
-                .map_err(FeedFinderError::Url)?)
+            return self.guess_segments("index.xml");
         } else if markup.contains("jekyll")
             || self.base_url
                 .host_str()
                 .map(|host| host.ends_with("github.io"))
                 .unwrap_or(false)
         {
-            Some(self.base_url
-                .join("./atom.xml")
-                .map_err(FeedFinderError::Url)?)
+            return self.guess_segments("atom.xml");
         } else if markup.contains("ghost") {
-            Some(self.base_url.join("./rss/").map_err(FeedFinderError::Url)?)
+            Some(self.base_url.join("/rss/").map_err(FeedFinderError::Url)?)
         } else {
             None
         };
@@ -581,15 +612,45 @@ fn test_guess_ghost() {
 }
 
 #[test]
-fn test_guess_non_root() {
-    let base = Url::parse("http://example.com/blog/").unwrap();
+fn test_guess_hugo_non_root() {
+    let base = Url::parse("http://example.com/blog/post/").unwrap();
     let html = r#"<html><head><meta name="generator" content="Hugo 0.27.1" /></head><body>First post!</body</html>"#;
-    let url = Url::parse("http://example.com/blog/index.xml").unwrap();
     assert_eq!(
         detect_feeds(&base, html),
         Ok(vec![
             Feed {
-                url,
+                url: Url::parse("http://example.com/index.xml").unwrap(),
+                type_: FeedType::Guess,
+            },
+            Feed {
+                url: Url::parse("http://example.com/blog/index.xml").unwrap(),
+                type_: FeedType::Guess,
+            },
+            Feed {
+                url: Url::parse("http://example.com/blog/post/index.xml").unwrap(),
+                type_: FeedType::Guess,
+            },
+        ])
+    );
+}
+
+#[test]
+fn test_guess_jekyll_non_root() {
+    let base = Url::parse("http://example.github.io/blog/post/").unwrap();
+    let html = r#"<html><head></head><body>First post!</body</html>"#;
+    assert_eq!(
+        detect_feeds(&base, html),
+        Ok(vec![
+            Feed {
+                url: Url::parse("http://example.github.io/atom.xml").unwrap(),
+                type_: FeedType::Guess,
+            },
+            Feed {
+                url: Url::parse("http://example.github.io/blog/atom.xml").unwrap(),
+                type_: FeedType::Guess,
+            },
+            Feed {
+                url: Url::parse("http://example.github.io/blog/post/atom.xml").unwrap(),
                 type_: FeedType::Guess,
             },
         ])
