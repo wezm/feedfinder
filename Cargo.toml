@@ -13,6 +13,9 @@ license = "MIT"
 keywords = ["rss", "atom", "discovery", "feed"]
 categories = ["web-programming"]
 
+[badges]
+travis-ci = { repository = "wezm/feedfinder" }
+
 [dependencies]
 failure = "0.1"
 kuchiki = "0.6"
