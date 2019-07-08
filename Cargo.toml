@@ -15,5 +15,5 @@ categories = ["web-programming"]
 
 [dependencies]
 failure = "0.1"
-kuchiki = "0.6"
+kuchiki = "0.7"
 url = "1.6"
