@@ -12,7 +12,7 @@ A Rust crate for auto-discovering RSS, Atom, JSON feeds.
 
 ## Features
 
-`feedfiner` can find feeds:
+`feedfinder` can find feeds:
 
 * Linked via the `<link>` tag in the HTML
 * Linked via `<a>` tag in the HTML
