@@ -2,7 +2,7 @@
 
 A Rust crate for auto-discovering RSS, Atom, JSON feeds.
 
-[![Vexor status](https://ci.vexor.io/projects/4c415627-b942-4265-acbb-3a5274e51f84/status.svg)](https://ci.vexor.io/ui/projects/4c415627-b942-4265-acbb-3a5274e51f84/builds)
+[![Build Status](https://travis-ci.org/wezm/feedfinder.svg?branch=master)](https://travis-ci.org/wezm/feedfinder)
 [![Docs on docs.rs](https://docs.rs/feedfinder/badge.svg)][documentation]
 [![crates.io](https://img.shields.io/crates/v/feedfinder.svg)](https://crates.io/crates/feedfinder)
 
