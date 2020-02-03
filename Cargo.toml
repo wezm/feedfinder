@@ -18,5 +18,5 @@ travis-ci = { repository = "wezm/feedfinder" }
 
 [dependencies]
 failure = "0.1"
-kuchiki = "0.6"
+kuchiki = "0.8"
 url = "1.6"
