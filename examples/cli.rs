@@ -1,8 +1,8 @@
 extern crate feedfinder;
 extern crate url;
 
-use url::Url;
 use std::io::Read;
+use url::Url;
 
 // This example can be used to list the feeds found at a URL by combining it with
 // curl. For example:
@@ -14,7 +14,9 @@ fn main() {
 
         // Read html from stdin
         let mut html = String::new();
-        std::io::stdin().read_to_string(&mut html).expect("error reading HTML from stdin");
+        std::io::stdin()
+            .read_to_string(&mut html)
+            .expect("error reading HTML from stdin");
 
         match feedfinder::detect_feeds(&url, &html) {
             Ok(feeds) => {
