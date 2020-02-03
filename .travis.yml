@@ -1,10 +1,18 @@
 language: rust
+sudo: false
 cache: cargo
+
+os: linux
+
+rust:
+  - nightly
+  - beta
+  - stable
+  - 1.38.0
+
+jobs:
+  allow_failures:
+    - rust: nightly
+
 script:
   - cargo test
-rust:
-  - stable
-  - beta
-matrix:
-  allow_failures:
-    - rust: beta
