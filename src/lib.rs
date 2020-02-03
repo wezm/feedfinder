@@ -386,347 +386,352 @@ impl Feed {
     }
 }
 
-#[test]
-fn test_detect_meta_atom() {
-    let base = Url::parse("http://example.com/").unwrap();
-    let html = r#"<html><head><link rel="alternate" type="application/atom+xml" href="http://example.com/feed.atom"></head></html>"#;
-    let url = Url::parse("http://example.com/feed.atom").unwrap();
-    assert_eq!(
-        detect_feeds(&base, html),
-        Ok(vec![
-            Feed {
-                url,
-                type_: FeedType::Atom,
-            },
-        ])
-    );
-}
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-#[test]
-fn test_detect_meta_rss() {
-    let base = Url::parse("http://example.com/").unwrap();
-    let html = r#"<html><head><link rel="alternate" type="application/rss+xml" href="http://example.com/feed.rss"></head></html>"#;
-    let url = Url::parse("http://example.com/feed.rss").unwrap();
-    assert_eq!(
-        detect_feeds(&base, html),
-        Ok(vec![
-            Feed {
-                url,
-                type_: FeedType::Rss,
-            },
-        ])
-    );
-}
+    #[test]
+    fn test_detect_meta_atom() {
+        let base = Url::parse("http://example.com/").unwrap();
+        let html = r#"<html><head><link rel="alternate" type="application/atom+xml" href="http://example.com/feed.atom"></head></html>"#;
+        let url = Url::parse("http://example.com/feed.atom").unwrap();
+        assert_eq!(
+            detect_feeds(&base, html),
+            Ok(vec![
+                Feed {
+                    url,
+                    type_: FeedType::Atom,
+                },
+            ])
+        );
+    }
 
-#[test]
-fn test_detect_meta_rss_relative() {
-    let base = Url::parse("http://example.com/").unwrap();
-    let html = r#"<html><head><link rel="alternate" type="application/rss+xml" href="/feed.rss"></head></html>"#;
-    let url = Url::parse("http://example.com/feed.rss").unwrap();
-    assert_eq!(
-        detect_feeds(&base, html),
-        Ok(vec![
-            Feed {
-                url,
-                type_: FeedType::Rss,
-            },
-        ])
-    );
-}
+    #[test]
+    fn test_detect_meta_rss() {
+        let base = Url::parse("http://example.com/").unwrap();
+        let html = r#"<html><head><link rel="alternate" type="application/rss+xml" href="http://example.com/feed.rss"></head></html>"#;
+        let url = Url::parse("http://example.com/feed.rss").unwrap();
+        assert_eq!(
+            detect_feeds(&base, html),
+            Ok(vec![
+                Feed {
+                    url,
+                    type_: FeedType::Rss,
+                },
+            ])
+        );
+    }
 
-#[test]
-fn test_detect_meta_json_feed() {
-    let base = Url::parse("http://example.com/").unwrap();
-    let html = r#"<html><head><link rel="alternate" type="application/json" href="http://example.com/feed.json"></head></html>"#;
-    let url = Url::parse("http://example.com/feed.json").unwrap();
-    assert_eq!(
-        detect_feeds(&base, html),
-        Ok(vec![
-            Feed {
-                url,
-                type_: FeedType::Json,
-            },
-        ])
-    );
-}
+    #[test]
+    fn test_detect_meta_rss_relative() {
+        let base = Url::parse("http://example.com/").unwrap();
+        let html = r#"<html><head><link rel="alternate" type="application/rss+xml" href="/feed.rss"></head></html>"#;
+        let url = Url::parse("http://example.com/feed.rss").unwrap();
+        assert_eq!(
+            detect_feeds(&base, html),
+            Ok(vec![
+                Feed {
+                    url,
+                    type_: FeedType::Rss,
+                },
+            ])
+        );
+    }
 
-#[test]
-fn test_body_link_feed() {
-    let base = Url::parse("http://example.com/").unwrap();
-    let html = r#"<html><body><a href="/feed/">RSS</a></body</html>"#;
-    let url = Url::parse("http://example.com/feed/").unwrap();
-    assert_eq!(
-        detect_feeds(&base, html),
-        Ok(vec![
-            Feed {
-                url,
-                type_: FeedType::Link,
-            },
-        ])
-    );
-}
+    #[test]
+    fn test_detect_meta_json_feed() {
+        let base = Url::parse("http://example.com/").unwrap();
+        let html = r#"<html><head><link rel="alternate" type="application/json" href="http://example.com/feed.json"></head></html>"#;
+        let url = Url::parse("http://example.com/feed.json").unwrap();
+        assert_eq!(
+            detect_feeds(&base, html),
+            Ok(vec![
+                Feed {
+                    url,
+                    type_: FeedType::Json,
+                },
+            ])
+        );
+    }
 
-#[test]
-fn test_body_link_xml() {
-    let base = Url::parse("http://example.com/").unwrap();
-    let html = r#"<html><body><a href="/index.xml">RSS</a></body</html>"#;
-    let url = Url::parse("http://example.com/index.xml").unwrap();
-    assert_eq!(
-        detect_feeds(&base, html),
-        Ok(vec![
-            Feed {
-                url,
-                type_: FeedType::Link,
-            },
-        ])
-    );
-}
+    #[test]
+    fn test_body_link_feed() {
+        let base = Url::parse("http://example.com/").unwrap();
+        let html = r#"<html><body><a href="/feed/">RSS</a></body</html>"#;
+        let url = Url::parse("http://example.com/feed/").unwrap();
+        assert_eq!(
+            detect_feeds(&base, html),
+            Ok(vec![
+                Feed {
+                    url,
+                    type_: FeedType::Link,
+                },
+            ])
+        );
+    }
 
-#[test]
-fn test_body_link_rss() {
-    let base = Url::parse("http://example.com/").unwrap();
-    let html = r#"<html><body><a href="/comments.rss">RSS</a></body</html>"#;
-    let url = Url::parse("http://example.com/comments.rss").unwrap();
-    assert_eq!(
-        detect_feeds(&base, html),
-        Ok(vec![
-            Feed {
-                url,
-                type_: FeedType::Link,
-            },
-        ])
-    );
-}
+    #[test]
+    fn test_body_link_xml() {
+        let base = Url::parse("http://example.com/").unwrap();
+        let html = r#"<html><body><a href="/index.xml">RSS</a></body</html>"#;
+        let url = Url::parse("http://example.com/index.xml").unwrap();
+        assert_eq!(
+            detect_feeds(&base, html),
+            Ok(vec![
+                Feed {
+                    url,
+                    type_: FeedType::Link,
+                },
+            ])
+        );
+    }
 
-#[test]
-fn test_body_link_atom() {
-    let base = Url::parse("http://example.com/").unwrap();
-    let html = r#"<html><body><a href="http://other.example.com/posts.atom">RSS</a></body</html>"#;
-    let url = Url::parse("http://other.example.com/posts.atom").unwrap();
-    assert_eq!(
-        detect_feeds(&base, html),
-        Ok(vec![
-            Feed {
-                url,
-                type_: FeedType::Link,
-            },
-        ])
-    );
-}
+    #[test]
+    fn test_body_link_rss() {
+        let base = Url::parse("http://example.com/").unwrap();
+        let html = r#"<html><body><a href="/comments.rss">RSS</a></body</html>"#;
+        let url = Url::parse("http://example.com/comments.rss").unwrap();
+        assert_eq!(
+            detect_feeds(&base, html),
+            Ok(vec![
+                Feed {
+                    url,
+                    type_: FeedType::Link,
+                },
+            ])
+        );
+    }
 
-#[test]
-fn test_guess_tumblr() {
-    let base = Url::parse("http://example.com/").unwrap();
-    let html = r#"<html><head><link href="http://static.tumblr.com/example/jquery.fancybox-1.3.4.css" rel="stylesheet" type="text/css"></head><body>First post!</body</html>"#;
-    let url = Url::parse("http://example.com/rss").unwrap();
-    assert_eq!(
-        detect_feeds(&base, html),
-        Ok(vec![
-            Feed {
-                url,
-                type_: FeedType::Guess,
-            },
-        ])
-    );
-}
+    #[test]
+    fn test_body_link_atom() {
+        let base = Url::parse("http://example.com/").unwrap();
+        let html = r#"<html><body><a href="http://other.example.com/posts.atom">RSS</a></body</html>"#;
+        let url = Url::parse("http://other.example.com/posts.atom").unwrap();
+        assert_eq!(
+            detect_feeds(&base, html),
+            Ok(vec![
+                Feed {
+                    url,
+                    type_: FeedType::Link,
+                },
+            ])
+        );
+    }
 
-#[test]
-fn test_guess_wordpress() {
-    let base = Url::parse("http://example.com/").unwrap();
-    let html = r#"<html><head><meta name="generator" content="WordPress.com" /></head><body>First post!</body</html>"#;
-    let url = Url::parse("http://example.com/feed").unwrap();
-    assert_eq!(
-        detect_feeds(&base, html),
-        Ok(vec![
-            Feed {
-                url,
-                type_: FeedType::Guess,
-            },
-        ])
-    );
-}
+    #[test]
+    fn test_guess_tumblr() {
+        let base = Url::parse("http://example.com/").unwrap();
+        let html = r#"<html><head><link href="http://static.tumblr.com/example/jquery.fancybox-1.3.4.css" rel="stylesheet" type="text/css"></head><body>First post!</body</html>"#;
+        let url = Url::parse("http://example.com/rss").unwrap();
+        assert_eq!(
+            detect_feeds(&base, html),
+            Ok(vec![
+                Feed {
+                    url,
+                    type_: FeedType::Guess,
+                },
+            ])
+        );
+    }
 
-#[test]
-fn test_guess_hugo() {
-    let base = Url::parse("http://example.com/").unwrap();
-    let html = r#"<html><head><meta name="generator" content="Hugo 0.27.1" /></head><body>First post!</body</html>"#;
-    let url = Url::parse("http://example.com/index.xml").unwrap();
-    assert_eq!(
-        detect_feeds(&base, html),
-        Ok(vec![
-            Feed {
-                url,
-                type_: FeedType::Guess,
-            },
-        ])
-    );
-}
+    #[test]
+    fn test_guess_wordpress() {
+        let base = Url::parse("http://example.com/").unwrap();
+        let html = r#"<html><head><meta name="generator" content="WordPress.com" /></head><body>First post!</body</html>"#;
+        let url = Url::parse("http://example.com/feed").unwrap();
+        assert_eq!(
+            detect_feeds(&base, html),
+            Ok(vec![
+                Feed {
+                    url,
+                    type_: FeedType::Guess,
+                },
+            ])
+        );
+    }
 
-#[test]
-fn test_guess_jekyll() {
-    let base = Url::parse("http://example.com/").unwrap();
-    let html =
-        r#"<html><head></head><body><!-- Begin Jekyll SEO tag v2.3.0 -->First post!</body</html>"#;
-    let url = Url::parse("http://example.com/atom.xml").unwrap();
-    assert_eq!(
-        detect_feeds(&base, html),
-        Ok(vec![
-            Feed {
-                url,
-                type_: FeedType::Guess,
-            },
-        ])
-    );
-}
+    #[test]
+    fn test_guess_hugo() {
+        let base = Url::parse("http://example.com/").unwrap();
+        let html = r#"<html><head><meta name="generator" content="Hugo 0.27.1" /></head><body>First post!</body</html>"#;
+        let url = Url::parse("http://example.com/index.xml").unwrap();
+        assert_eq!(
+            detect_feeds(&base, html),
+            Ok(vec![
+                Feed {
+                    url,
+                    type_: FeedType::Guess,
+                },
+            ])
+        );
+    }
 
-#[test]
-fn test_guess_github_io() {
-    let base = Url::parse("http://example.github.io/").unwrap();
-    let html = r#"<html><head></head><body>First post!</body</html>"#;
-    let url = Url::parse("http://example.github.io/atom.xml").unwrap();
-    assert_eq!(
-        detect_feeds(&base, html),
-        Ok(vec![
-            Feed {
-                url,
-                type_: FeedType::Guess,
-            },
-        ])
-    );
-}
+    #[test]
+    fn test_guess_jekyll() {
+        let base = Url::parse("http://example.com/").unwrap();
+        let html =
+            r#"<html><head></head><body><!-- Begin Jekyll SEO tag v2.3.0 -->First post!</body</html>"#;
+        let url = Url::parse("http://example.com/atom.xml").unwrap();
+        assert_eq!(
+            detect_feeds(&base, html),
+            Ok(vec![
+                Feed {
+                    url,
+                    type_: FeedType::Guess,
+                },
+            ])
+        );
+    }
 
-#[test]
-fn test_guess_ghost() {
-    let base = Url::parse("http://example.com/").unwrap();
-    let html = r#"<html><head><meta name="generator" content="Ghost 1.21" /></head><body>First post!</body</html>"#;
-    let url = Url::parse("http://example.com/rss/").unwrap();
-    assert_eq!(
-        detect_feeds(&base, html),
-        Ok(vec![
-            Feed {
-                url,
-                type_: FeedType::Guess,
-            },
-        ])
-    );
-}
+    #[test]
+    fn test_guess_github_io() {
+        let base = Url::parse("http://example.github.io/").unwrap();
+        let html = r#"<html><head></head><body>First post!</body</html>"#;
+        let url = Url::parse("http://example.github.io/atom.xml").unwrap();
+        assert_eq!(
+            detect_feeds(&base, html),
+            Ok(vec![
+                Feed {
+                    url,
+                    type_: FeedType::Guess,
+                },
+            ])
+        );
+    }
 
-#[test]
-fn test_guess_hugo_non_root() {
-    let base = Url::parse("http://example.com/blog/post/").unwrap();
-    let html = r#"<html><head><meta name="generator" content="Hugo 0.27.1" /></head><body>First post!</body</html>"#;
-    assert_eq!(
-        detect_feeds(&base, html),
-        Ok(vec![
-            Feed {
-                url: Url::parse("http://example.com/index.xml").unwrap(),
-                type_: FeedType::Guess,
-            },
-            Feed {
-                url: Url::parse("http://example.com/blog/index.xml").unwrap(),
-                type_: FeedType::Guess,
-            },
-            Feed {
-                url: Url::parse("http://example.com/blog/post/index.xml").unwrap(),
-                type_: FeedType::Guess,
-            },
-        ])
-    );
-}
+    #[test]
+    fn test_guess_ghost() {
+        let base = Url::parse("http://example.com/").unwrap();
+        let html = r#"<html><head><meta name="generator" content="Ghost 1.21" /></head><body>First post!</body</html>"#;
+        let url = Url::parse("http://example.com/rss/").unwrap();
+        assert_eq!(
+            detect_feeds(&base, html),
+            Ok(vec![
+                Feed {
+                    url,
+                    type_: FeedType::Guess,
+                },
+            ])
+        );
+    }
 
-#[test]
-fn test_guess_jekyll_non_root() {
-    let base = Url::parse("http://example.github.io/blog/post/").unwrap();
-    let html = r#"<html><head></head><body>First post!</body</html>"#;
-    assert_eq!(
-        detect_feeds(&base, html),
-        Ok(vec![
-            Feed {
-                url: Url::parse("http://example.github.io/atom.xml").unwrap(),
-                type_: FeedType::Guess,
-            },
-            Feed {
-                url: Url::parse("http://example.github.io/blog/atom.xml").unwrap(),
-                type_: FeedType::Guess,
-            },
-            Feed {
-                url: Url::parse("http://example.github.io/blog/post/atom.xml").unwrap(),
-                type_: FeedType::Guess,
-            },
-        ])
-    );
-}
+    #[test]
+    fn test_guess_hugo_non_root() {
+        let base = Url::parse("http://example.com/blog/post/").unwrap();
+        let html = r#"<html><head><meta name="generator" content="Hugo 0.27.1" /></head><body>First post!</body</html>"#;
+        assert_eq!(
+            detect_feeds(&base, html),
+            Ok(vec![
+                Feed {
+                    url: Url::parse("http://example.com/index.xml").unwrap(),
+                    type_: FeedType::Guess,
+                },
+                Feed {
+                    url: Url::parse("http://example.com/blog/index.xml").unwrap(),
+                    type_: FeedType::Guess,
+                },
+                Feed {
+                    url: Url::parse("http://example.com/blog/post/index.xml").unwrap(),
+                    type_: FeedType::Guess,
+                },
+            ])
+        );
+    }
 
-#[test]
-fn test_youtube_channel() {
-    let base = Url::parse("https://www.youtube.com/channel/UCaYhcUwRBNscFNUKTjgPFiA").unwrap();
-    let html = r#"<html><head></head><body>YouTube</body</html>"#;
-    let url = Url::parse(
-        "https://www.youtube.com/feeds/videos.xml?channel_id=UCaYhcUwRBNscFNUKTjgPFiA",
-    ).unwrap();
-    assert_eq!(
-        detect_feeds(&base, html),
-        Ok(vec![
-            Feed {
-                url,
-                type_: FeedType::Atom,
-            },
-        ])
-    );
-}
+    #[test]
+    fn test_guess_jekyll_non_root() {
+        let base = Url::parse("http://example.github.io/blog/post/").unwrap();
+        let html = r#"<html><head></head><body>First post!</body</html>"#;
+        assert_eq!(
+            detect_feeds(&base, html),
+            Ok(vec![
+                Feed {
+                    url: Url::parse("http://example.github.io/atom.xml").unwrap(),
+                    type_: FeedType::Guess,
+                },
+                Feed {
+                    url: Url::parse("http://example.github.io/blog/atom.xml").unwrap(),
+                    type_: FeedType::Guess,
+                },
+                Feed {
+                    url: Url::parse("http://example.github.io/blog/post/atom.xml").unwrap(),
+                    type_: FeedType::Guess,
+                },
+            ])
+        );
+    }
 
-#[test]
-fn test_youtube_user() {
-    let base = Url::parse("https://www.youtube.com/user/wezmnet").unwrap();
-    let html = r#"<html><head></head><body>YouTube</body</html>"#;
-    let url = Url::parse("https://www.youtube.com/feeds/videos.xml?user=wezmnet").unwrap();
-    assert_eq!(
-        detect_feeds(&base, html),
-        Ok(vec![
-            Feed {
-                url,
-                type_: FeedType::Atom,
-            },
-        ])
-    );
-}
+    #[test]
+    fn test_youtube_channel() {
+        let base = Url::parse("https://www.youtube.com/channel/UCaYhcUwRBNscFNUKTjgPFiA").unwrap();
+        let html = r#"<html><head></head><body>YouTube</body</html>"#;
+        let url = Url::parse(
+            "https://www.youtube.com/feeds/videos.xml?channel_id=UCaYhcUwRBNscFNUKTjgPFiA",
+        ).unwrap();
+        assert_eq!(
+            detect_feeds(&base, html),
+            Ok(vec![
+                Feed {
+                    url,
+                    type_: FeedType::Atom,
+                },
+            ])
+        );
+    }
 
-#[test]
-fn test_youtube_playlist() {
-    let base = Url::parse(
-        "https://www.youtube.com/playlist?list=PLTOeCUgrkpMNEHx6j0vCH0cuyAIVZadnc",
-    ).unwrap();
-    let html = r#"<html><head></head><body>YouTube</body</html>"#;
-    let url = Url::parse(
-        "https://www.youtube.com/feeds/videos.xml?playlist_id=PLTOeCUgrkpMNEHx6j0vCH0cuyAIVZadnc",
-    ).unwrap();
-    assert_eq!(
-        detect_feeds(&base, html),
-        Ok(vec![
-            Feed {
-                url,
-                type_: FeedType::Atom,
-            },
-        ])
-    );
-}
+    #[test]
+    fn test_youtube_user() {
+        let base = Url::parse("https://www.youtube.com/user/wezmnet").unwrap();
+        let html = r#"<html><head></head><body>YouTube</body</html>"#;
+        let url = Url::parse("https://www.youtube.com/feeds/videos.xml?user=wezmnet").unwrap();
+        assert_eq!(
+            detect_feeds(&base, html),
+            Ok(vec![
+                Feed {
+                    url,
+                    type_: FeedType::Atom,
+                },
+            ])
+        );
+    }
 
-#[test]
-fn test_youtube_watch_playlist() {
-    let base = Url::parse(
-        "https://www.youtube.com/watch?v=0gjFYpvHyrY&list=FLOEg2K4TcePNx9SdGdR0zpg",
-    ).unwrap();
-    let html = r#"<html><head></head><body>YouTube</body</html>"#;
-    let url = Url::parse(
-        "https://www.youtube.com/feeds/videos.xml?playlist_id=FLOEg2K4TcePNx9SdGdR0zpg",
-    ).unwrap();
-    assert_eq!(
-        detect_feeds(&base, html),
-        Ok(vec![
-            Feed {
-                url,
-                type_: FeedType::Atom,
-            },
-        ])
-    );
+    #[test]
+    fn test_youtube_playlist() {
+        let base = Url::parse(
+            "https://www.youtube.com/playlist?list=PLTOeCUgrkpMNEHx6j0vCH0cuyAIVZadnc",
+        ).unwrap();
+        let html = r#"<html><head></head><body>YouTube</body</html>"#;
+        let url = Url::parse(
+            "https://www.youtube.com/feeds/videos.xml?playlist_id=PLTOeCUgrkpMNEHx6j0vCH0cuyAIVZadnc",
+        ).unwrap();
+        assert_eq!(
+            detect_feeds(&base, html),
+            Ok(vec![
+                Feed {
+                    url,
+                    type_: FeedType::Atom,
+                },
+            ])
+        );
+    }
+
+    #[test]
+    fn test_youtube_watch_playlist() {
+        let base = Url::parse(
+            "https://www.youtube.com/watch?v=0gjFYpvHyrY&list=FLOEg2K4TcePNx9SdGdR0zpg",
+        ).unwrap();
+        let html = r#"<html><head></head><body>YouTube</body</html>"#;
+        let url = Url::parse(
+            "https://www.youtube.com/feeds/videos.xml?playlist_id=FLOEg2K4TcePNx9SdGdR0zpg",
+        ).unwrap();
+        assert_eq!(
+            detect_feeds(&base, html),
+            Ok(vec![
+                Feed {
+                    url,
+                    type_: FeedType::Atom,
+                },
+            ])
+        );
+    }
 }
