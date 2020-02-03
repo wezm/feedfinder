@@ -72,15 +72,17 @@ extern crate failure;
 extern crate kuchiki;
 extern crate url;
 
-use url::Url;
 use kuchiki::traits::*;
+use url::Url;
 
 const MIGHT_BE_FEED: [&str; 4] = ["feed", "xml", "rss", "atom"];
 
 #[derive(Debug, Fail, PartialEq)]
 pub enum FeedFinderError {
-    #[fail(display = "{}", _0)] Url(#[cause] url::ParseError),
-    #[fail(display = "unable to select elements in doc")] Select,
+    #[fail(display = "{}", _0)]
+    Url(#[cause] url::ParseError),
+    #[fail(display = "unable to select elements in doc")]
+    Select,
 }
 
 #[derive(Debug, PartialEq)]
@@ -206,7 +208,8 @@ fn nth_path_segment(url: &Url, nth: usize) -> Option<&str> {
 impl<'a> FeedFinder<'a> {
     fn meta_links(&self) -> FeedResult {
         let mut feeds = vec![];
-        for link in self.doc
+        for link in self
+            .doc
             .select("link[rel='alternate']")
             .map_err(|_| FeedFinderError::Select)?
         {
@@ -241,7 +244,8 @@ impl<'a> FeedFinder<'a> {
                 let feed = Url::parse(&format!(
                     "https://www.youtube.com/feeds/videos.xml?channel_id={}",
                     id
-                )).map_err(FeedFinderError::Url)?;
+                ))
+                .map_err(FeedFinderError::Url)?;
                 feeds.push(Feed {
                     url: feed,
                     type_: FeedType::Atom,
@@ -253,7 +257,8 @@ impl<'a> FeedFinder<'a> {
                 let feed = Url::parse(&format!(
                     "https://www.youtube.com/feeds/videos.xml?user={}",
                     id
-                )).map_err(FeedFinderError::Url)?;
+                ))
+                .map_err(FeedFinderError::Url)?;
                 feeds.push(Feed {
                     url: feed,
                     type_: FeedType::Atom,
@@ -268,7 +273,8 @@ impl<'a> FeedFinder<'a> {
                     let feed = Url::parse(&format!(
                         "https://www.youtube.com/feeds/videos.xml?playlist_id={}",
                         value
-                    )).map_err(FeedFinderError::Url)?;
+                    ))
+                    .map_err(FeedFinderError::Url)?;
                     feeds.push(Feed {
                         url: feed,
                         type_: FeedType::Atom,
@@ -309,7 +315,8 @@ impl<'a> FeedFinder<'a> {
             let mut segments = vec!["", feed_file];
 
             loop {
-                let url = self.base_url
+                let url = self
+                    .base_url
                     .join(&segments.join("/"))
                     .map_err(FeedFinderError::Url)?;
                 feeds.push(Feed {
@@ -351,7 +358,8 @@ impl<'a> FeedFinder<'a> {
         } else if markup.contains("hugo") {
             return self.guess_segments("index.xml");
         } else if markup.contains("jekyll")
-            || self.base_url
+            || self
+                .base_url
                 .host_str()
                 .map(|host| host.ends_with("github.io"))
                 .unwrap_or(false)
@@ -363,14 +371,14 @@ impl<'a> FeedFinder<'a> {
             None
         };
 
-        Ok(url.map(|url| {
-            vec![
-                Feed {
+        Ok(url
+            .map(|url| {
+                vec![Feed {
                     url,
                     type_: FeedType::Guess,
-                },
-            ]
-        }).unwrap_or_else(|| vec![]))
+                }]
+            })
+            .unwrap_or_else(|| vec![]))
     }
 }
 
@@ -397,12 +405,10 @@ mod tests {
         let url = Url::parse("http://example.com/feed.atom").unwrap();
         assert_eq!(
             detect_feeds(&base, html),
-            Ok(vec![
-                Feed {
-                    url,
-                    type_: FeedType::Atom,
-                },
-            ])
+            Ok(vec![Feed {
+                url,
+                type_: FeedType::Atom,
+            },])
         );
     }
 
@@ -413,12 +419,10 @@ mod tests {
         let url = Url::parse("http://example.com/feed.rss").unwrap();
         assert_eq!(
             detect_feeds(&base, html),
-            Ok(vec![
-                Feed {
-                    url,
-                    type_: FeedType::Rss,
-                },
-            ])
+            Ok(vec![Feed {
+                url,
+                type_: FeedType::Rss,
+            },])
         );
     }
 
@@ -429,12 +433,10 @@ mod tests {
         let url = Url::parse("http://example.com/feed.rss").unwrap();
         assert_eq!(
             detect_feeds(&base, html),
-            Ok(vec![
-                Feed {
-                    url,
-                    type_: FeedType::Rss,
-                },
-            ])
+            Ok(vec![Feed {
+                url,
+                type_: FeedType::Rss,
+            },])
         );
     }
 
@@ -445,12 +447,10 @@ mod tests {
         let url = Url::parse("http://example.com/feed.json").unwrap();
         assert_eq!(
             detect_feeds(&base, html),
-            Ok(vec![
-                Feed {
-                    url,
-                    type_: FeedType::Json,
-                },
-            ])
+            Ok(vec![Feed {
+                url,
+                type_: FeedType::Json,
+            },])
         );
     }
 
@@ -461,12 +461,10 @@ mod tests {
         let url = Url::parse("http://example.com/feed/").unwrap();
         assert_eq!(
             detect_feeds(&base, html),
-            Ok(vec![
-                Feed {
-                    url,
-                    type_: FeedType::Link,
-                },
-            ])
+            Ok(vec![Feed {
+                url,
+                type_: FeedType::Link,
+            },])
         );
     }
 
@@ -477,12 +475,10 @@ mod tests {
         let url = Url::parse("http://example.com/index.xml").unwrap();
         assert_eq!(
             detect_feeds(&base, html),
-            Ok(vec![
-                Feed {
-                    url,
-                    type_: FeedType::Link,
-                },
-            ])
+            Ok(vec![Feed {
+                url,
+                type_: FeedType::Link,
+            },])
         );
     }
 
@@ -493,28 +489,25 @@ mod tests {
         let url = Url::parse("http://example.com/comments.rss").unwrap();
         assert_eq!(
             detect_feeds(&base, html),
-            Ok(vec![
-                Feed {
-                    url,
-                    type_: FeedType::Link,
-                },
-            ])
+            Ok(vec![Feed {
+                url,
+                type_: FeedType::Link,
+            },])
         );
     }
 
     #[test]
     fn test_body_link_atom() {
         let base = Url::parse("http://example.com/").unwrap();
-        let html = r#"<html><body><a href="http://other.example.com/posts.atom">RSS</a></body</html>"#;
+        let html =
+            r#"<html><body><a href="http://other.example.com/posts.atom">RSS</a></body</html>"#;
         let url = Url::parse("http://other.example.com/posts.atom").unwrap();
         assert_eq!(
             detect_feeds(&base, html),
-            Ok(vec![
-                Feed {
-                    url,
-                    type_: FeedType::Link,
-                },
-            ])
+            Ok(vec![Feed {
+                url,
+                type_: FeedType::Link,
+            },])
         );
     }
 
@@ -525,12 +518,10 @@ mod tests {
         let url = Url::parse("http://example.com/rss").unwrap();
         assert_eq!(
             detect_feeds(&base, html),
-            Ok(vec![
-                Feed {
-                    url,
-                    type_: FeedType::Guess,
-                },
-            ])
+            Ok(vec![Feed {
+                url,
+                type_: FeedType::Guess,
+            },])
         );
     }
 
@@ -541,12 +532,10 @@ mod tests {
         let url = Url::parse("http://example.com/feed").unwrap();
         assert_eq!(
             detect_feeds(&base, html),
-            Ok(vec![
-                Feed {
-                    url,
-                    type_: FeedType::Guess,
-                },
-            ])
+            Ok(vec![Feed {
+                url,
+                type_: FeedType::Guess,
+            },])
         );
     }
 
@@ -557,29 +546,24 @@ mod tests {
         let url = Url::parse("http://example.com/index.xml").unwrap();
         assert_eq!(
             detect_feeds(&base, html),
-            Ok(vec![
-                Feed {
-                    url,
-                    type_: FeedType::Guess,
-                },
-            ])
+            Ok(vec![Feed {
+                url,
+                type_: FeedType::Guess,
+            },])
         );
     }
 
     #[test]
     fn test_guess_jekyll() {
         let base = Url::parse("http://example.com/").unwrap();
-        let html =
-            r#"<html><head></head><body><!-- Begin Jekyll SEO tag v2.3.0 -->First post!</body</html>"#;
+        let html = r#"<html><head></head><body><!-- Begin Jekyll SEO tag v2.3.0 -->First post!</body</html>"#;
         let url = Url::parse("http://example.com/atom.xml").unwrap();
         assert_eq!(
             detect_feeds(&base, html),
-            Ok(vec![
-                Feed {
-                    url,
-                    type_: FeedType::Guess,
-                },
-            ])
+            Ok(vec![Feed {
+                url,
+                type_: FeedType::Guess,
+            },])
         );
     }
 
@@ -590,12 +574,10 @@ mod tests {
         let url = Url::parse("http://example.github.io/atom.xml").unwrap();
         assert_eq!(
             detect_feeds(&base, html),
-            Ok(vec![
-                Feed {
-                    url,
-                    type_: FeedType::Guess,
-                },
-            ])
+            Ok(vec![Feed {
+                url,
+                type_: FeedType::Guess,
+            },])
         );
     }
 
@@ -606,12 +588,10 @@ mod tests {
         let url = Url::parse("http://example.com/rss/").unwrap();
         assert_eq!(
             detect_feeds(&base, html),
-            Ok(vec![
-                Feed {
-                    url,
-                    type_: FeedType::Guess,
-                },
-            ])
+            Ok(vec![Feed {
+                url,
+                type_: FeedType::Guess,
+            },])
         );
     }
 
@@ -667,15 +647,14 @@ mod tests {
         let html = r#"<html><head></head><body>YouTube</body</html>"#;
         let url = Url::parse(
             "https://www.youtube.com/feeds/videos.xml?channel_id=UCaYhcUwRBNscFNUKTjgPFiA",
-        ).unwrap();
+        )
+        .unwrap();
         assert_eq!(
             detect_feeds(&base, html),
-            Ok(vec![
-                Feed {
-                    url,
-                    type_: FeedType::Atom,
-                },
-            ])
+            Ok(vec![Feed {
+                url,
+                type_: FeedType::Atom,
+            },])
         );
     }
 
@@ -686,52 +665,47 @@ mod tests {
         let url = Url::parse("https://www.youtube.com/feeds/videos.xml?user=wezmnet").unwrap();
         assert_eq!(
             detect_feeds(&base, html),
-            Ok(vec![
-                Feed {
-                    url,
-                    type_: FeedType::Atom,
-                },
-            ])
+            Ok(vec![Feed {
+                url,
+                type_: FeedType::Atom,
+            },])
         );
     }
 
     #[test]
     fn test_youtube_playlist() {
-        let base = Url::parse(
-            "https://www.youtube.com/playlist?list=PLTOeCUgrkpMNEHx6j0vCH0cuyAIVZadnc",
-        ).unwrap();
+        let base =
+            Url::parse("https://www.youtube.com/playlist?list=PLTOeCUgrkpMNEHx6j0vCH0cuyAIVZadnc")
+                .unwrap();
         let html = r#"<html><head></head><body>YouTube</body</html>"#;
         let url = Url::parse(
             "https://www.youtube.com/feeds/videos.xml?playlist_id=PLTOeCUgrkpMNEHx6j0vCH0cuyAIVZadnc",
         ).unwrap();
         assert_eq!(
             detect_feeds(&base, html),
-            Ok(vec![
-                Feed {
-                    url,
-                    type_: FeedType::Atom,
-                },
-            ])
+            Ok(vec![Feed {
+                url,
+                type_: FeedType::Atom,
+            },])
         );
     }
 
     #[test]
     fn test_youtube_watch_playlist() {
-        let base = Url::parse(
-            "https://www.youtube.com/watch?v=0gjFYpvHyrY&list=FLOEg2K4TcePNx9SdGdR0zpg",
-        ).unwrap();
+        let base =
+            Url::parse("https://www.youtube.com/watch?v=0gjFYpvHyrY&list=FLOEg2K4TcePNx9SdGdR0zpg")
+                .unwrap();
         let html = r#"<html><head></head><body>YouTube</body</html>"#;
         let url = Url::parse(
             "https://www.youtube.com/feeds/videos.xml?playlist_id=FLOEg2K4TcePNx9SdGdR0zpg",
-        ).unwrap();
+        )
+        .unwrap();
         assert_eq!(
             detect_feeds(&base, html),
-            Ok(vec![
-                Feed {
-                    url,
-                    type_: FeedType::Atom,
-                },
-            ])
+            Ok(vec![Feed {
+                url,
+                type_: FeedType::Atom,
+            },])
         );
     }
 }
