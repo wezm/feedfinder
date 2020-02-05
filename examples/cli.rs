@@ -1,5 +1,4 @@
-extern crate feedfinder;
-extern crate url;
+use feedfinder;
 
 use std::io::Read;
 use url::Url;

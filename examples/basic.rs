@@ -1,6 +1,3 @@
-extern crate feedfinder;
-extern crate url;
-
 use feedfinder::detect_feeds;
 use url::Url;
 
