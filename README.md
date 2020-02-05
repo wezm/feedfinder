@@ -6,6 +6,8 @@ A Rust crate for auto-discovering RSS, Atom, JSON feeds.
 [![Docs on docs.rs](https://docs.rs/feedfinder/badge.svg)][documentation]
 [![crates.io](https://img.shields.io/crates/v/feedfinder.svg)](https://crates.io/crates/feedfinder)
 
+**Minimum Supported Rust Version:** 1.38.0
+
 ## Documentation
 
 [Documentation][documentation] is available on docs.rs.

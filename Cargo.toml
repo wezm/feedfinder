@@ -3,6 +3,7 @@ name = "feedfinder"
 description = "Auto-discovery of feeds in HTML content"
 version = "0.1.0"
 authors = ["Wesley Moore <wes@wezm.net>"]
+edition = "2018"
 
 documentation = "https://docs.rs/crate/feedfinder/"
 repository = "https://github.com/wezm/feedfinder"

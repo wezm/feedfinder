@@ -36,9 +36,6 @@
 //! This example detects the feed linked via the `<link>` tag in the HTML.
 //!
 //! ```rust
-//! extern crate feedfinder;
-//! extern crate url;
-//!
 //! use feedfinder::detect_feeds;
 //! use url::Url;
 //!
@@ -69,8 +66,8 @@
 
 #[macro_use]
 extern crate failure;
-extern crate kuchiki;
-extern crate url;
+use kuchiki;
+use url;
 
 use kuchiki::traits::*;
 use url::Url;
@@ -145,9 +142,6 @@ struct FeedFinder<'a> {
 /// ### Example
 ///
 /// ```rust
-/// extern crate feedfinder;
-/// extern crate url;
-///
 /// use feedfinder::detect_feeds;
 /// use url::Url;
 ///
