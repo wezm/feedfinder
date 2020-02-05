@@ -64,21 +64,15 @@
 //! }
 //! ```
 
-#[macro_use]
-extern crate failure;
-use kuchiki;
-use url;
-
 use kuchiki::traits::*;
+use std::fmt;
 use url::Url;
 
 const MIGHT_BE_FEED: [&str; 4] = ["feed", "xml", "rss", "atom"];
 
-#[derive(Debug, Fail, PartialEq)]
+#[derive(Debug, PartialEq)]
 pub enum FeedFinderError {
-    #[fail(display = "{}", _0)]
-    Url(#[cause] url::ParseError),
-    #[fail(display = "unable to select elements in doc")]
+    Url(url::ParseError),
     Select,
 }
 
@@ -387,6 +381,17 @@ impl Feed {
         &self.type_
     }
 }
+
+impl fmt::Display for FeedFinderError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            FeedFinderError::Url(err) => err.fmt(f),
+            FeedFinderError::Select => f.write_str("unable to select elements in doc"),
+        }
+    }
+}
+
+impl std::error::Error for FeedFinderError {}
 
 #[cfg(test)]
 mod tests {
