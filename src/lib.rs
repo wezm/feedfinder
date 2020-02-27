@@ -66,7 +66,7 @@
 
 use kuchiki::traits::*;
 use std::fmt;
-use url::Url;
+pub use url::Url;
 
 const MIGHT_BE_FEED: [&str; 4] = ["feed", "xml", "rss", "atom"];
 
