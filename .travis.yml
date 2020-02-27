@@ -15,4 +15,7 @@ jobs:
     - rust: nightly
 
 script:
-  - cargo test
+  - cargo test # current version of url
+  - cargo update -p url --precise 1.7.1 && cargo test
+  - cargo update -p url --precise 2.0.0 && cargo test
+  - cargo update -p url --precise 2.1.1 && cargo test

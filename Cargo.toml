@@ -19,4 +19,4 @@ travis-ci = { repository = "wezm/feedfinder" }
 
 [dependencies]
 kuchiki = "0.8"
-url = "1.6"
+url = ">= 1.7.1, < 3"
