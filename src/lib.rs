@@ -89,6 +89,7 @@ pub enum FeedType {
 pub struct Feed {
     url: Url,
     type_: FeedType,
+    title: Option<String>,
 }
 
 type FeedResult = Result<Vec<Feed>, FeedFinderError>;
@@ -199,18 +200,22 @@ impl<'a> FeedFinder<'a> {
             .map_err(|_| FeedFinderError::Select)?
         {
             let attrs = link.attributes.borrow();
+            let title = attrs.get("title").map(|title| title.to_owned());
             match (attrs.get("type"), attrs.get("href")) {
                 (Some("application/rss+xml"), Some(href)) => feeds.push(Feed {
                     url: self.base_url.join(href).map_err(FeedFinderError::Url)?,
                     type_: FeedType::Rss,
+                    title,
                 }),
                 (Some("application/atom+xml"), Some(href)) => feeds.push(Feed {
                     url: self.base_url.join(href).map_err(FeedFinderError::Url)?,
                     type_: FeedType::Atom,
+                    title,
                 }),
                 (Some("application/json"), Some(href)) => feeds.push(Feed {
                     url: self.base_url.join(href).map_err(FeedFinderError::Url)?,
                     type_: FeedType::Json,
+                    title,
                 }),
                 _ => (),
             }
@@ -234,6 +239,7 @@ impl<'a> FeedFinder<'a> {
                 feeds.push(Feed {
                     url: feed,
                     type_: FeedType::Atom,
+                    title: None,
                 });
             }
         } else if url.starts_with("https://www.youtube.com/user/") {
@@ -247,6 +253,7 @@ impl<'a> FeedFinder<'a> {
                 feeds.push(Feed {
                     url: feed,
                     type_: FeedType::Atom,
+                    title: None,
                 });
             }
         } else if url.starts_with("https://www.youtube.com/playlist?list=")
@@ -263,6 +270,7 @@ impl<'a> FeedFinder<'a> {
                     feeds.push(Feed {
                         url: feed,
                         type_: FeedType::Atom,
+                        title: None,
                     });
                     break;
                 }
@@ -283,6 +291,7 @@ impl<'a> FeedFinder<'a> {
                     feeds.push(Feed {
                         url: self.base_url.join(href).map_err(FeedFinderError::Url)?,
                         type_: FeedType::Link,
+                        title: None,
                     })
                 }
             }
@@ -307,6 +316,7 @@ impl<'a> FeedFinder<'a> {
                 feeds.push(Feed {
                     url,
                     type_: FeedType::Guess,
+                    title: None,
                 });
 
                 if remaining_segments.is_empty() {
@@ -361,6 +371,7 @@ impl<'a> FeedFinder<'a> {
                 vec![Feed {
                     url,
                     type_: FeedType::Guess,
+                    title: None,
                 }]
             })
             .unwrap_or_else(Vec::new))
@@ -376,6 +387,11 @@ impl Feed {
     /// Get the type of this feed.
     pub fn feed_type(&self) -> &FeedType {
         &self.type_
+    }
+
+    /// Get the title of the feed if available.
+    pub fn title(&self) -> Option<&str> {
+        self.title.as_deref()
     }
 }
 
@@ -404,6 +420,7 @@ mod tests {
             Ok(vec![Feed {
                 url,
                 type_: FeedType::Atom,
+                title: None
             },])
         );
     }
@@ -418,6 +435,44 @@ mod tests {
             Ok(vec![Feed {
                 url,
                 type_: FeedType::Rss,
+                title: None
+            },])
+        );
+    }
+
+    #[test]
+    fn test_detect_meta_rss_title() {
+        let base = Url::parse("http://example.com/").unwrap();
+        let html = r#"<html><head><link rel="alternate" type="application/rss+xml" href="http://example.com/feed.rss" title="RSS Feed"></head></html>"#;
+        let url = Url::parse("http://example.com/feed.rss").unwrap();
+        assert_eq!(
+            detect_feeds(&base, html),
+            Ok(vec![Feed {
+                url,
+                type_: FeedType::Rss,
+                title: Some(String::from("RSS Feed"))
+            },])
+        );
+    }
+
+    #[test]
+    fn test_detect_meta_rss_title_multiple() {
+        let base = Url::parse("https://wordpress.com/blog/2021/12/07/drive-more-traffic-to-your-site-with-a-link-in-bio-social-links-page/").unwrap();
+        let html = r#"<html><head>
+        <link rel="alternate" type="application/rss+xml" title="WordPress.com Blog" href="https://wordpress.com/blog/feed/">
+        <link rel="alternate" type="application/rss+xml" title="WordPress.com News » Drive More Traffic To Your Site With a “Link In Bio” Social Links&nbsp;Page Comments Feed" href="https://wordpress.com/blog/2021/12/07/drive-more-traffic-to-your-site-with-a-link-in-bio-social-links-page/feed/">
+        </head></html>"#;
+        assert_eq!(
+            detect_feeds(&base, html),
+            Ok(vec![Feed {
+                url: "https://wordpress.com/blog/feed/".parse().unwrap(),
+                type_: FeedType::Rss,
+                title: Some(String::from("WordPress.com Blog"))
+            },
+            Feed {
+                url: "https://wordpress.com/blog/2021/12/07/drive-more-traffic-to-your-site-with-a-link-in-bio-social-links-page/feed/".parse().unwrap(),
+                type_: FeedType::Rss,
+                title: Some(String::from("WordPress.com News » Drive More Traffic To Your Site With a “Link In Bio” Social Links\u{a0}Page Comments Feed"))
             },])
         );
     }
@@ -432,6 +487,7 @@ mod tests {
             Ok(vec![Feed {
                 url,
                 type_: FeedType::Rss,
+                title: None
             },])
         );
     }
@@ -446,6 +502,7 @@ mod tests {
             Ok(vec![Feed {
                 url,
                 type_: FeedType::Json,
+                title: None
             },])
         );
     }
@@ -460,6 +517,7 @@ mod tests {
             Ok(vec![Feed {
                 url,
                 type_: FeedType::Link,
+                title: None
             },])
         );
     }
@@ -474,6 +532,7 @@ mod tests {
             Ok(vec![Feed {
                 url,
                 type_: FeedType::Link,
+                title: None
             },])
         );
     }
@@ -488,6 +547,7 @@ mod tests {
             Ok(vec![Feed {
                 url,
                 type_: FeedType::Link,
+                title: None
             },])
         );
     }
@@ -503,6 +563,7 @@ mod tests {
             Ok(vec![Feed {
                 url,
                 type_: FeedType::Link,
+                title: None
             },])
         );
     }
@@ -517,6 +578,7 @@ mod tests {
             Ok(vec![Feed {
                 url,
                 type_: FeedType::Guess,
+                title: None
             },])
         );
     }
@@ -531,6 +593,7 @@ mod tests {
             Ok(vec![Feed {
                 url,
                 type_: FeedType::Guess,
+                title: None
             },])
         );
     }
@@ -545,6 +608,7 @@ mod tests {
             Ok(vec![Feed {
                 url,
                 type_: FeedType::Guess,
+                title: None
             },])
         );
     }
@@ -559,6 +623,7 @@ mod tests {
             Ok(vec![Feed {
                 url,
                 type_: FeedType::Guess,
+                title: None
             },])
         );
     }
@@ -573,6 +638,7 @@ mod tests {
             Ok(vec![Feed {
                 url,
                 type_: FeedType::Guess,
+                title: None
             },])
         );
     }
@@ -587,6 +653,7 @@ mod tests {
             Ok(vec![Feed {
                 url,
                 type_: FeedType::Guess,
+                title: None
             },])
         );
     }
@@ -601,14 +668,17 @@ mod tests {
                 Feed {
                     url: Url::parse("http://example.com/index.xml").unwrap(),
                     type_: FeedType::Guess,
+                    title: None
                 },
                 Feed {
                     url: Url::parse("http://example.com/blog/index.xml").unwrap(),
                     type_: FeedType::Guess,
+                    title: None
                 },
                 Feed {
                     url: Url::parse("http://example.com/blog/post/index.xml").unwrap(),
                     type_: FeedType::Guess,
+                    title: None
                 },
             ])
         );
@@ -624,14 +694,17 @@ mod tests {
                 Feed {
                     url: Url::parse("http://example.github.io/atom.xml").unwrap(),
                     type_: FeedType::Guess,
+                    title: None
                 },
                 Feed {
                     url: Url::parse("http://example.github.io/blog/atom.xml").unwrap(),
                     type_: FeedType::Guess,
+                    title: None
                 },
                 Feed {
                     url: Url::parse("http://example.github.io/blog/post/atom.xml").unwrap(),
                     type_: FeedType::Guess,
+                    title: None
                 },
             ])
         );
@@ -650,6 +723,7 @@ mod tests {
             Ok(vec![Feed {
                 url,
                 type_: FeedType::Atom,
+                title: None
             },])
         );
     }
@@ -664,6 +738,7 @@ mod tests {
             Ok(vec![Feed {
                 url,
                 type_: FeedType::Atom,
+                title: None
             },])
         );
     }
@@ -682,6 +757,7 @@ mod tests {
             Ok(vec![Feed {
                 url,
                 type_: FeedType::Atom,
+                title: None
             },])
         );
     }
@@ -701,6 +777,7 @@ mod tests {
             Ok(vec![Feed {
                 url,
                 type_: FeedType::Atom,
+                title: None
             },])
         );
     }
