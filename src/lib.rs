@@ -8,7 +8,7 @@
 //!
 //! ## About
 //!
-//! `feedfiner` can find feeds from these sources:
+//! `feedfinder` can find feeds from these sources:
 //!
 //! * Linked via the `<link>` tag in the HTML
 //! * Linked via `<a>` tag in the HTML
@@ -186,11 +186,8 @@ pub fn detect_feeds(base_url: &Url, html: &str) -> FeedResult {
 }
 
 fn nth_path_segment(url: &Url, nth: usize) -> Option<&str> {
-    if let Some(mut segments) = url.path_segments() {
-        segments.nth(nth)
-    } else {
-        None
-    }
+    url.path_segments()
+        .and_then(|mut segments| segments.nth(nth))
 }
 
 impl<'a> FeedFinder<'a> {
@@ -366,17 +363,17 @@ impl<'a> FeedFinder<'a> {
                     type_: FeedType::Guess,
                 }]
             })
-            .unwrap_or_else(|| vec![]))
+            .unwrap_or_else(Vec::new))
     }
 }
 
 impl Feed {
-    // Get the URL of this feed.
+    /// Get the URL of this feed.
     pub fn url(&self) -> &Url {
         &self.url
     }
 
-    // Get the type of this feed.
+    /// Get the type of this feed.
     pub fn feed_type(&self) -> &FeedType {
         &self.type_
     }
