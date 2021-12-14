@@ -2,11 +2,11 @@
 
 A Rust crate for auto-discovering RSS, Atom, JSON feeds.
 
-[![Build Status](https://travis-ci.org/wezm/feedfinder.svg?branch=master)](https://travis-ci.org/wezm/feedfinder)
+[![Build Status](https://api.cirrus-ci.com/github/wezm/feedfinder.svg)](https://cirrus-ci.com/github/wezm/feedfinder)
 [![Docs on docs.rs](https://docs.rs/feedfinder/badge.svg)][documentation]
 [![crates.io](https://img.shields.io/crates/v/feedfinder.svg)](https://crates.io/crates/feedfinder)
 
-**Minimum Supported Rust Version:** 1.38.0
+**Minimum Supported Rust Version:** 1.46.0
 
 ## Documentation
 
