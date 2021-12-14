@@ -5,7 +5,7 @@ version = "0.4.0"
 authors = ["Wesley Moore <wes@wezm.net>"]
 edition = "2018"
 
-documentation = "https://docs.rs/crate/feedfinder/"
+documentation = "https://docs.rs/feedfinder/"
 repository = "https://github.com/wezm/feedfinder"
 
 readme = "README.md"
@@ -13,9 +13,6 @@ license = "MIT"
 
 keywords = ["rss", "atom", "discovery", "feed"]
 categories = ["web-programming"]
-
-[badges]
-travis-ci = { repository = "wezm/feedfinder" }
 
 [dependencies]
 kuchiki = "0.8"
